@@ -1,0 +1,84 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    color-scheme: dark;
+  }
+
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+
+  body {
+    @apply bg-bg text-soft font-sans antialiased;
+    margin: 0;
+    overscroll-behavior-y: none;
+  }
+
+  * {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  input,
+  select,
+  textarea {
+    font-size: 16px; /* предотвращает зум на iOS */
+  }
+}
+
+@layer components {
+  .card {
+    @apply bg-surface rounded-card p-4;
+  }
+
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-2xl px-4 py-3 font-medium
+      transition active:scale-[0.98] disabled:opacity-40;
+  }
+
+  .btn-accent {
+    @apply btn bg-accent text-white;
+  }
+
+  .btn-ghost {
+    @apply btn bg-surface-2 text-soft;
+  }
+
+  .field {
+    @apply w-full rounded-2xl bg-surface-2 px-4 py-3 text-soft placeholder:text-muted
+      outline-none focus:ring-2 focus:ring-accent/60;
+  }
+
+  .label {
+    @apply mb-1.5 block text-sm text-muted;
+  }
+
+  .chip {
+    @apply rounded-full px-4 py-2 text-sm font-medium transition;
+  }
+
+  .chip-active {
+    @apply bg-accent-bright text-white;
+  }
+
+  .chip-idle {
+    @apply bg-surface-2 text-muted;
+  }
+}
+
+/* Скрытие скроллбара для горизонтальных лент */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.safe-bottom {
+  padding-bottom: calc(env(safe-area-inset-bottom) + 5.5rem);
+}
