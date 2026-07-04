@@ -5,6 +5,7 @@ import { db } from '@/db/db';
 import type { CreditKind, PaymentType } from '@/db/types';
 import { debtProgress } from '@/lib/finance';
 import { formatMoney, formatPercent } from '@/lib/format';
+import { PALETTE, SECTION_COLOR, withAlpha } from '@/lib/theme';
 import { Modal } from '@/components/ui/Modal';
 import { ProgressBar } from '@/components/ui/ProgressBar';
 import { EmptyState } from '@/components/ui/EmptyState';
@@ -15,7 +16,8 @@ const KIND_LABEL: Record<CreditKind, string> = {
   mortgage: 'Ипотека',
   credit_card: 'Кредитная карта',
 };
-const COLORS = ['#BA181B', '#E5383B', '#A4161A', '#660708', '#B1A7A6'];
+const COLORS = PALETTE;
+const SECTION = SECTION_COLOR.credits;
 
 /** Секция «Кредиты и долги» — переиспользуется внутри страницы «Капитал». */
 export function CreditsSection() {
@@ -31,7 +33,8 @@ export function CreditsSection() {
         <h2 className="font-semibold">Кредиты и долги</h2>
         <button
           onClick={() => setCreating(true)}
-          className="grid h-9 w-9 place-items-center rounded-full bg-surface-2 text-accent-bright"
+          className="grid h-9 w-9 place-items-center rounded-full"
+          style={{ backgroundColor: withAlpha(SECTION, '1f'), color: SECTION }}
           aria-label="Добавить кредит"
         >
           <IconPlus width={18} height={18} />
@@ -52,6 +55,7 @@ export function CreditsSection() {
           icon="🏦"
           title="Кредитов нет"
           hint="Добавьте кредит, ипотеку или кредитную карту, чтобы отслеживать закрытие долга"
+          color={SECTION}
         />
       ) : (
         <div className="space-y-3">

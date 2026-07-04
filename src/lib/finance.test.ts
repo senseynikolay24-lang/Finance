@@ -6,6 +6,7 @@ import {
   debtProgress,
   depositIncome,
   depositMaturityValue,
+  freedomColor,
   goalProgress,
   holdingPnL,
   holdingPnLPct,
@@ -133,5 +134,20 @@ describe('savingsRatePct', () => {
   });
   it('нулевой доход → 0%', () => {
     expect(savingsRatePct(0, 0)).toBe(0);
+  });
+});
+
+describe('freedomColor', () => {
+  it('ниже 30% — danger (красный)', () => {
+    expect(freedomColor(0)).toBe('#C81E1E');
+    expect(freedomColor(29)).toBe('#C81E1E');
+  });
+  it('30–59% — жёлтый', () => {
+    expect(freedomColor(30)).toBe('#eda100');
+    expect(freedomColor(59)).toBe('#eda100');
+  });
+  it('60% и выше — income (зелёный)', () => {
+    expect(freedomColor(60)).toBe('#1F8A4C');
+    expect(freedomColor(100)).toBe('#1F8A4C');
   });
 });

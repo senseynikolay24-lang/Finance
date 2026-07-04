@@ -5,8 +5,10 @@ import { db } from '@/db/db';
 import { periodRange, type Period } from '@/lib/period';
 import { groupTransactionsByDay, sumTotals, trendSeries } from '@/lib/analytics';
 import { formatDate, formatMoney } from '@/lib/format';
+import { PALETTE } from '@/lib/theme';
 import { TransactionRow } from '@/features/transactions/TransactionList';
 import { EmptyState } from '@/components/ui/EmptyState';
+import { Skeleton } from '@/components/ui/Skeleton';
 
 type Preset = 'day' | 'week' | 'month' | 'year' | 'all';
 
@@ -51,16 +53,17 @@ export function OperationsPage() {
         .between(range.start, range.end, true, true)
         .toArray(),
     [range.start, range.end],
-    [],
   );
 
-  const totals = useMemo(() => sumTotals(txns), [txns]);
+  const loading = txns === undefined;
+  const rows = txns ?? [];
+  const totals = useMemo(() => sumTotals(rows), [rows]);
   const granularity = granularityFor(range.start, range.end);
   const trend = useMemo(
-    () => trendSeries(txns, range, granularity),
-    [txns, range, granularity],
+    () => trendSeries(rows, range, granularity),
+    [rows, range, granularity],
   );
-  const groups = useMemo(() => groupTransactionsByDay(txns), [txns]);
+  const groups = useMemo(() => groupTransactionsByDay(rows), [rows]);
 
   return (
     <div className="space-y-5">
@@ -164,11 +167,18 @@ export function OperationsPage() {
       {/* Лента операций по дням */}
       <div>
         <h2 className="mb-2 font-semibold">Операции</h2>
-        {groups.length === 0 ? (
+        {loading ? (
+          <div className="space-y-2">
+            <Skeleton className="h-14 w-full" />
+            <Skeleton className="h-14 w-full" />
+            <Skeleton className="h-14 w-full" />
+          </div>
+        ) : groups.length === 0 ? (
           <EmptyState
             icon="📒"
             title="Нет операций за период"
             hint="Измените период или добавьте операцию через «+»"
+            color={PALETTE[0]}
           />
         ) : (
           <div className="space-y-4">

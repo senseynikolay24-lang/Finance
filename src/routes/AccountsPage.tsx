@@ -5,6 +5,7 @@ import type { Account, AccountType, Currency } from '@/db/types';
 import { addTransaction, deleteAccount } from '@/db/repo';
 import { creditCardMonthlyInterest } from '@/lib/finance';
 import { formatMoney, formatPercent } from '@/lib/format';
+import { PALETTE, SECTION_COLOR } from '@/lib/theme';
 import { Modal } from '@/components/ui/Modal';
 import { ProgressBar } from '@/components/ui/ProgressBar';
 import { EmptyState } from '@/components/ui/EmptyState';
@@ -16,7 +17,7 @@ const TYPE_LABEL: Record<AccountType, string> = {
   account: 'Счёт',
   credit_card: 'Кредитная карта',
 };
-const COLORS = ['#BA181B', '#E5383B', '#8A1417', '#1F8A4C', '#8A8482'];
+const COLORS = PALETTE;
 const INTEREST_CATEGORY_NAME = 'Проценты и комиссии';
 
 /** Секция «Карты и счета» — переиспользуется внутри страницы «Капитал». */
@@ -57,7 +58,7 @@ export function AccountsSection() {
       </div>
 
       {accounts.length === 0 ? (
-        <EmptyState icon="💳" title="Счетов пока нет" />
+        <EmptyState icon="💳" title="Счетов пока нет" color={SECTION_COLOR.accounts} />
       ) : (
         <div className="space-y-3">
           {accounts.map((a) => (

@@ -4,6 +4,7 @@ import { db } from '@/db/db';
 import type { Holding, PortfolioKind } from '@/db/types';
 import { holdingPnL, holdingPnLPct, holdingValue } from '@/lib/finance';
 import { formatDateTime, formatMoney, formatPercent } from '@/lib/format';
+import { PALETTE, SECTION_COLOR, withAlpha } from '@/lib/theme';
 import { Modal } from '@/components/ui/Modal';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { IconChevronRight, IconPlus, IconTrash } from '@/components/ui/Icon';
@@ -12,7 +13,8 @@ const KIND_LABEL: Record<PortfolioKind, string> = {
   broker: 'Брокерский счёт',
   iis: 'ИИС',
 };
-const COLORS = ['#BA181B', '#2E9E5B', '#E5383B', '#A4161A', '#B1A7A6'];
+const COLORS = PALETTE;
+const SECTION = SECTION_COLOR.investments;
 
 /** Секция «Инвестиции» — переиспользуется внутри страницы «Капитал», сворачиваемая. */
 export function InvestmentsSection() {
@@ -74,7 +76,8 @@ export function InvestmentsSection() {
           <div className="mb-3 flex justify-end">
             <button
               onClick={() => setCreatingPortfolio(true)}
-              className="grid h-9 w-9 place-items-center rounded-full bg-surface-2 text-accent-bright"
+              className="grid h-9 w-9 place-items-center rounded-full"
+              style={{ backgroundColor: withAlpha(SECTION, '1f'), color: SECTION }}
               aria-label="Добавить портфель"
             >
               <IconPlus width={18} height={18} />
@@ -86,6 +89,7 @@ export function InvestmentsSection() {
               icon="📈"
               title="Портфелей нет"
               hint="Создайте брокерский счёт или ИИС и добавьте акции. Котировки обновляются вручную."
+              color={SECTION}
             />
           ) : (
             <div className="space-y-4">
@@ -108,7 +112,8 @@ export function InvestmentsSection() {
                     </span>
                     <button
                       onClick={() => setEditingHolding({ portfolioId: p.id })}
-                      className="grid h-8 w-8 place-items-center rounded-full bg-surface-2 text-accent-bright"
+                      className="grid h-8 w-8 place-items-center rounded-full"
+                      style={{ backgroundColor: withAlpha(SECTION, '1f'), color: SECTION }}
                       aria-label="Добавить акцию"
                     >
                       <IconPlus width={16} height={16} />

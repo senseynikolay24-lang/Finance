@@ -21,8 +21,8 @@ export default defineConfig({
         description:
           'Отслеживание долгов, кредитов, ипотеки, целей, вкладов, инвестиций, доходов и расходов',
         lang: 'ru',
-        theme_color: '#0B090A',
-        background_color: '#0B090A',
+        theme_color: '#BA181B',
+        background_color: '#FAFAFA',
         display: 'standalone',
         orientation: 'portrait',
         icons: [
