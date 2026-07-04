@@ -9,3 +9,6 @@ coverage
 dev-dist
 
 *.tsbuildinfo
+dist-single
+*.html
+!index.html
