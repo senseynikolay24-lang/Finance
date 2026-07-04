@@ -5,6 +5,7 @@ import { db } from '@/db/db';
 import { periodRange, shiftPeriod } from '@/lib/period';
 import { categoryBreakdown, subcategoryBreakdown } from '@/lib/analytics';
 import { formatCompact, formatMoney, monthKey, monthTitle } from '@/lib/format';
+import { SECTION_COLOR } from '@/lib/theme';
 import { ProgressBar } from '@/components/ui/ProgressBar';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { CategoryRow } from '@/features/analytics/CategoryRow';
@@ -119,7 +120,7 @@ export function BudgetPage() {
         </div>
 
         {breakdown.length === 0 ? (
-          <EmptyState icon="📊" title="Нет расходов за месяц" />
+          <EmptyState icon="📊" title="Нет расходов за месяц" color={SECTION_COLOR.budget} />
         ) : (
           <>
             <div className="card mb-3 flex items-center gap-4">

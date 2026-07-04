@@ -5,12 +5,13 @@ import type { Goal } from '@/db/types';
 import { contributeToGoal } from '@/db/repo';
 import { goalProgress } from '@/lib/finance';
 import { formatDate, formatMoney } from '@/lib/format';
+import { PALETTE, SECTION_COLOR } from '@/lib/theme';
 import { ProgressBar } from '@/components/ui/ProgressBar';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { Modal } from '@/components/ui/Modal';
 import { IconPlus, IconTarget, IconTrash } from '@/components/ui/Icon';
 
-const COLORS = ['#E5383B', '#BA181B', '#2E9E5B', '#A4161A', '#660708', '#B1A7A6'];
+const COLORS = PALETTE;
 const ICONS = ['🎯', '🏖️', '🚗', '🏠', '💍', '🎓', '💻', '✈️', '🎁'];
 
 export function GoalsPage() {
@@ -36,6 +37,7 @@ export function GoalsPage() {
           icon="🎯"
           title="Целей пока нет"
           hint="Поставьте финансовую цель — например, накопить на отпуск или подушку безопасности"
+          color={SECTION_COLOR.goals}
         />
       ) : (
         <div className="space-y-3">

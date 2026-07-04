@@ -4,31 +4,46 @@ import { Cell, Pie, PieChart, ResponsiveContainer } from 'recharts';
 import { db } from '@/db/db';
 import { holdingValue, netWorth } from '@/lib/finance';
 import { formatMoney } from '@/lib/format';
+import { SECTION_COLOR, withAlpha } from '@/lib/theme';
+import { useCountUp } from '@/lib/useCountUp';
+import { Skeleton } from '@/components/ui/Skeleton';
 import { AccountsSection } from './AccountsPage';
 import { DepositsSection } from './DepositsPage';
 import { InvestmentsSection } from './InvestmentsPage';
 import { CreditsSection } from './CreditsPage';
 
-const ALLOCATION_COLORS = ['#BA181B', '#1F8A4C', '#8A8482'];
+// Цвета совпадают с тематическими цветами разделов Счета/Вклады/Инвестиции.
+const ALLOCATION_COLORS = [
+  SECTION_COLOR.accounts,
+  SECTION_COLOR.deposits,
+  SECTION_COLOR.investments,
+];
 
 export function CapitalPage() {
-  const accounts = useLiveQuery(() => db.accounts.toArray(), [], []);
-  const deposits = useLiveQuery(() => db.deposits.toArray(), [], []);
-  const holdings = useLiveQuery(() => db.holdings.toArray(), [], []);
-  const credits = useLiveQuery(() => db.credits.toArray(), [], []);
+  const accounts = useLiveQuery(() => db.accounts.toArray());
+  const deposits = useLiveQuery(() => db.deposits.toArray());
+  const holdings = useLiveQuery(() => db.holdings.toArray());
+  const credits = useLiveQuery(() => db.credits.toArray());
 
-  const accountsTotal = accounts
+  const ready =
+    accounts !== undefined &&
+    deposits !== undefined &&
+    holdings !== undefined &&
+    credits !== undefined;
+
+  const accountsTotal = (accounts ?? [])
     .filter((a) => !a.isArchived)
     .reduce((s, a) => s + a.balance, 0);
-  const depositsTotal = deposits.reduce((s, d) => s + d.amount, 0);
-  const investmentsTotal = holdings.reduce(
+  const depositsTotal = (deposits ?? []).reduce((s, d) => s + d.amount, 0);
+  const investmentsTotal = (holdings ?? []).reduce(
     (s, h) => s + holdingValue(h.quantity, h.lastPrice),
     0,
   );
-  const debtsTotal = credits.reduce((s, c) => s + c.currentDebt, 0);
+  const debtsTotal = (credits ?? []).reduce((s, c) => s + c.currentDebt, 0);
 
   const assetsTotal = accountsTotal + depositsTotal + investmentsTotal;
   const capital = netWorth(accountsTotal, depositsTotal, investmentsTotal, debtsTotal);
+  const capitalAnim = useCountUp(capital);
 
   const allocation = useMemo(
     () =>
@@ -40,14 +55,22 @@ export function CapitalPage() {
     [accountsTotal, depositsTotal, investmentsTotal],
   );
 
+  if (!ready) return <CapitalSkeleton />;
+
   return (
     <div className="space-y-6">
       <h1 className="pt-1 text-2xl font-bold">Капитал</h1>
 
-      <div className="card">
+      <div
+        className="card-hero"
+        style={{
+          backgroundImage: `linear-gradient(180deg, ${withAlpha('#BA181B', '0d')}, transparent 42%)`,
+        }}
+      >
+        <div className="absolute inset-x-0 top-0 h-[3px]" style={{ backgroundColor: '#BA181B' }} />
         <p className="text-sm text-muted">Чистый капитал</p>
         <p className="mt-1 text-3xl font-bold tracking-tight">
-          {formatMoney(capital, 'RUB', { fraction: false })}
+          {formatMoney(capitalAnim, 'RUB', { fraction: false })}
         </p>
       </div>
 
@@ -111,6 +134,25 @@ export function CapitalPage() {
       <DepositsSection />
       <InvestmentsSection />
       <CreditsSection />
+    </div>
+  );
+}
+
+function CapitalSkeleton() {
+  return (
+    <div className="space-y-6">
+      <Skeleton className="h-8 w-40" />
+      <Skeleton className="h-20 w-full" />
+      <div className="grid grid-cols-2 gap-3">
+        <Skeleton className="h-16 w-full" />
+        <Skeleton className="h-16 w-full" />
+      </div>
+      <Skeleton className="h-40 w-full" />
+      <div className="space-y-3">
+        <Skeleton className="h-6 w-32" />
+        <Skeleton className="h-16 w-full" />
+        <Skeleton className="h-16 w-full" />
+      </div>
     </div>
   );
 }

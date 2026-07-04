@@ -183,3 +183,10 @@ export function savingsRatePct(income: number, expense: number): number {
   if (income <= 0) return 0;
   return clamp(((income - expense) / income) * 100, 0, 100);
 }
+
+/** Цвет «Индекса свободы» по значению: красный / жёлтый / зелёный. */
+export function freedomColor(pct: number): string {
+  if (pct < 30) return '#C81E1E'; // danger
+  if (pct < 60) return '#eda100'; // жёлтый
+  return '#1F8A4C'; // income
+}

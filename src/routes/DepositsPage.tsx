@@ -5,6 +5,7 @@ import type { Capitalization, Deposit } from '@/db/types';
 import { depositIncome, depositMaturityValue } from '@/lib/finance';
 import { formatDate, formatMoney, formatPercent } from '@/lib/format';
 import { addMonths } from 'date-fns';
+import { PALETTE, SECTION_COLOR, withAlpha } from '@/lib/theme';
 import { Modal } from '@/components/ui/Modal';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { IconPlus, IconTrash } from '@/components/ui/Icon';
@@ -16,7 +17,8 @@ const CAP_LABEL: Record<Capitalization, string> = {
   yearly: 'Ежегодно',
   end: 'В конце срока',
 };
-const COLORS = ['#2E9E5B', '#BA181B', '#E5383B', '#A4161A', '#B1A7A6'];
+const COLORS = PALETTE;
+const SECTION = SECTION_COLOR.deposits;
 
 /** Секция «Вклады и накопления» — переиспользуется внутри страницы «Капитал». */
 export function DepositsSection() {
@@ -35,7 +37,8 @@ export function DepositsSection() {
         <h2 className="font-semibold">Вклады и накопления</h2>
         <button
           onClick={() => setEditing({})}
-          className="grid h-9 w-9 place-items-center rounded-full bg-surface-2 text-accent-bright"
+          className="grid h-9 w-9 place-items-center rounded-full"
+          style={{ backgroundColor: withAlpha(SECTION, '1f'), color: SECTION }}
           aria-label="Добавить вклад"
         >
           <IconPlus width={18} height={18} />
@@ -64,6 +67,7 @@ export function DepositsSection() {
           icon="🪙"
           title="Вкладов нет"
           hint="Добавьте депозит со ставкой и сроком, чтобы видеть будущий доход"
+          color={SECTION}
         />
       ) : (
         <div className="space-y-3">
