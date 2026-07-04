@@ -4,7 +4,12 @@ import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
 import path from 'node:path';
 
+// base: на GitHub Pages сайт публикуется по адресу /<repo>/, локально и в single-file
+// сборке путь должен оставаться корневым.
+const base = process.env.GH_PAGES ? '/Finance/' : '/';
+
 export default defineConfig({
+  base,
   plugins: [
     react(),
     VitePWA({

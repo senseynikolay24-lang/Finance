@@ -8,6 +8,7 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "build:single": "tsc -b && vite build --config vite.config.singlefile.ts",
+    "build:pages": "tsc -b && GH_PAGES=true vite build",
     "preview": "vite preview",
     "lint": "eslint .",
     "test": "vitest run",
