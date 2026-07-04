@@ -5,7 +5,6 @@ import { db } from '@/db/db';
 import type { CreditKind, PaymentType } from '@/db/types';
 import { debtProgress } from '@/lib/finance';
 import { formatMoney, formatPercent } from '@/lib/format';
-import { PageHeader } from '@/components/PageHeader';
 import { Modal } from '@/components/ui/Modal';
 import { ProgressBar } from '@/components/ui/ProgressBar';
 import { EmptyState } from '@/components/ui/EmptyState';
@@ -18,7 +17,8 @@ const KIND_LABEL: Record<CreditKind, string> = {
 };
 const COLORS = ['#BA181B', '#E5383B', '#A4161A', '#660708', '#B1A7A6'];
 
-export function CreditsPage() {
+/** Секция «Кредиты и долги» — переиспользуется внутри страницы «Капитал». */
+export function CreditsSection() {
   const navigate = useNavigate();
   const credits = useLiveQuery(() => db.credits.toArray(), [], []);
   const [creating, setCreating] = useState(false);
@@ -26,19 +26,17 @@ export function CreditsPage() {
   const totalDebt = credits.reduce((s, c) => s + c.currentDebt, 0);
 
   return (
-    <div>
-      <PageHeader
-        title="Кредиты и ипотека"
-        action={
-          <button
-            onClick={() => setCreating(true)}
-            className="grid h-10 w-10 place-items-center rounded-full bg-accent text-white"
-            aria-label="Добавить кредит"
-          >
-            <IconPlus width={20} height={20} />
-          </button>
-        }
-      />
+    <section>
+      <div className="mb-2 flex items-center justify-between">
+        <h2 className="font-semibold">Кредиты и долги</h2>
+        <button
+          onClick={() => setCreating(true)}
+          className="grid h-9 w-9 place-items-center rounded-full bg-surface-2 text-accent-bright"
+          aria-label="Добавить кредит"
+        >
+          <IconPlus width={18} height={18} />
+        </button>
+      </div>
 
       {credits.length > 0 && (
         <div className="card mb-4">
@@ -87,7 +85,7 @@ export function CreditsPage() {
       )}
 
       {creating && <CreditForm onClose={() => setCreating(false)} />}
-    </div>
+    </section>
   );
 }
 

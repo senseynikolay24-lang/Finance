@@ -136,7 +136,7 @@ export function CreditDetailPage() {
       {payments.length === 0 ? (
         <p className="py-6 text-center text-sm text-muted">Платежей пока нет</p>
       ) : (
-        <div className="divide-y divide-white/5">
+        <div className="divide-y divide-line">
           {payments.map((p) => (
             <div key={p.id} className="flex items-center justify-between py-3">
               <div>
@@ -178,7 +178,7 @@ export function CreditDetailPage() {
               </thead>
               <tbody>
                 {schedule.map((r) => (
-                  <tr key={r.month} className="border-t border-white/5">
+                  <tr key={r.month} className="border-t border-line">
                     <td className="py-1.5">{r.month}</td>
                     <td className="py-1.5 text-right">
                       {formatMoney(r.payment, 'RUB', { fraction: false })}

@@ -2,7 +2,7 @@
 
 export type Currency = 'RUB' | 'USD' | 'EUR';
 
-export type AccountType = 'card' | 'cash' | 'account';
+export type AccountType = 'card' | 'cash' | 'account' | 'credit_card';
 
 export interface Account {
   id?: number;
@@ -13,6 +13,13 @@ export interface Account {
   color: string;
   isArchived: boolean;
   createdAt: number;
+  // Поля ниже заполняются только для type === 'credit_card'.
+  creditLimit?: number; // кредитный лимит
+  rate?: number; // годовая процентная ставка, %
+  gracePeriodDays?: number; // льготный период (дни без процентов)
+  minPaymentPct?: number; // минимальный платёж как % от долга
+  minPaymentFixed?: number; // минимальный платёж фиксированной суммой
+  statementDay?: number; // день месяца формирования выписки
 }
 
 export type CategoryKind = 'income' | 'expense';

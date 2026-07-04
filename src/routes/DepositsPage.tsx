@@ -5,7 +5,6 @@ import type { Capitalization, Deposit } from '@/db/types';
 import { depositIncome, depositMaturityValue } from '@/lib/finance';
 import { formatDate, formatMoney, formatPercent } from '@/lib/format';
 import { addMonths } from 'date-fns';
-import { PageHeader } from '@/components/PageHeader';
 import { Modal } from '@/components/ui/Modal';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { IconPlus, IconTrash } from '@/components/ui/Icon';
@@ -19,7 +18,8 @@ const CAP_LABEL: Record<Capitalization, string> = {
 };
 const COLORS = ['#2E9E5B', '#BA181B', '#E5383B', '#A4161A', '#B1A7A6'];
 
-export function DepositsPage() {
+/** Секция «Вклады и накопления» — переиспользуется внутри страницы «Капитал». */
+export function DepositsSection() {
   const deposits = useLiveQuery(() => db.deposits.toArray(), [], []);
   const [editing, setEditing] = useState<Partial<Deposit> | null>(null);
 
@@ -30,19 +30,17 @@ export function DepositsPage() {
   );
 
   return (
-    <div>
-      <PageHeader
-        title="Вклады"
-        action={
-          <button
-            onClick={() => setEditing({})}
-            className="grid h-10 w-10 place-items-center rounded-full bg-accent text-white"
-            aria-label="Добавить вклад"
-          >
-            <IconPlus width={20} height={20} />
-          </button>
-        }
-      />
+    <section>
+      <div className="mb-2 flex items-center justify-between">
+        <h2 className="font-semibold">Вклады и накопления</h2>
+        <button
+          onClick={() => setEditing({})}
+          className="grid h-9 w-9 place-items-center rounded-full bg-surface-2 text-accent-bright"
+          aria-label="Добавить вклад"
+        >
+          <IconPlus width={18} height={18} />
+        </button>
+      </div>
 
       {deposits.length > 0 && (
         <div className="mb-4 grid grid-cols-2 gap-3">
@@ -96,7 +94,7 @@ export function DepositsPage() {
       )}
 
       {editing && <DepositForm deposit={editing} onClose={() => setEditing(null)} />}
-    </div>
+    </section>
   );
 }
 
