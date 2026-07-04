@@ -4,10 +4,9 @@ import { db } from '@/db/db';
 import type { Holding, PortfolioKind } from '@/db/types';
 import { holdingPnL, holdingPnLPct, holdingValue } from '@/lib/finance';
 import { formatDateTime, formatMoney, formatPercent } from '@/lib/format';
-import { PageHeader } from '@/components/PageHeader';
 import { Modal } from '@/components/ui/Modal';
 import { EmptyState } from '@/components/ui/EmptyState';
-import { IconPlus, IconTrash } from '@/components/ui/Icon';
+import { IconChevronRight, IconPlus, IconTrash } from '@/components/ui/Icon';
 
 const KIND_LABEL: Record<PortfolioKind, string> = {
   broker: 'Брокерский счёт',
@@ -15,11 +14,13 @@ const KIND_LABEL: Record<PortfolioKind, string> = {
 };
 const COLORS = ['#BA181B', '#2E9E5B', '#E5383B', '#A4161A', '#B1A7A6'];
 
-export function InvestmentsPage() {
+/** Секция «Инвестиции» — переиспользуется внутри страницы «Капитал», сворачиваемая. */
+export function InvestmentsSection() {
   const portfolios = useLiveQuery(() => db.portfolios.toArray(), [], []);
   const holdings = useLiveQuery(() => db.holdings.toArray(), [], []);
   const [creatingPortfolio, setCreatingPortfolio] = useState(false);
   const [editingHolding, setEditingHolding] = useState<Partial<Holding> | null>(null);
+  const [open, setOpen] = useState(true);
 
   const totalValue = holdings.reduce(
     (s, h) => s + holdingValue(h.quantity, h.lastPrice),
@@ -31,46 +32,64 @@ export function InvestmentsPage() {
   );
 
   return (
-    <div>
-      <PageHeader
-        title="Инвестиции"
-        action={
-          <button
-            onClick={() => setCreatingPortfolio(true)}
-            className="grid h-10 w-10 place-items-center rounded-full bg-accent text-white"
-            aria-label="Добавить портфель"
-          >
-            <IconPlus width={20} height={20} />
-          </button>
-        }
-      />
+    <section>
+      <button
+        onClick={() => setOpen((o) => !o)}
+        className="mb-2 flex w-full items-center justify-between"
+      >
+        <h2 className="font-semibold">Инвестиции</h2>
+        <span className="flex items-center gap-2">
+          {holdings.length > 0 && (
+            <span className="text-sm font-medium">
+              {formatMoney(totalValue, 'RUB', { fraction: false })}
+            </span>
+          )}
+          <IconChevronRight
+            width={18}
+            height={18}
+            className={`text-muted transition-transform ${open ? 'rotate-90' : ''}`}
+          />
+        </span>
+      </button>
 
-      {holdings.length > 0 && (
-        <div className="card mb-4">
-          <p className="text-sm text-muted">Стоимость портфеля</p>
-          <p className="text-2xl font-bold">
-            {formatMoney(totalValue, 'RUB', { fraction: false })}
-          </p>
-          <p
-            className={`mt-1 text-sm font-medium ${
-              totalPnL >= 0 ? 'text-income' : 'text-accent-bright'
-            }`}
-          >
-            {totalPnL >= 0 ? '+' : '−'}
-            {formatMoney(Math.abs(totalPnL), 'RUB', { fraction: false })} прибыль/убыток
-          </p>
-        </div>
-      )}
+      {open && (
+        <>
+          {holdings.length > 0 && (
+            <div className="card mb-4">
+              <p className="text-sm text-muted">Стоимость портфеля</p>
+              <p className="text-2xl font-bold">
+                {formatMoney(totalValue, 'RUB', { fraction: false })}
+              </p>
+              <p
+                className={`mt-1 text-sm font-medium ${
+                  totalPnL >= 0 ? 'text-income' : 'text-accent-bright'
+                }`}
+              >
+                {totalPnL >= 0 ? '+' : '−'}
+                {formatMoney(Math.abs(totalPnL), 'RUB', { fraction: false })} прибыль/убыток
+              </p>
+            </div>
+          )}
 
-      {portfolios.length === 0 ? (
-        <EmptyState
-          icon="📈"
-          title="Портфелей нет"
-          hint="Создайте брокерский счёт или ИИС и добавьте акции. Котировки обновляются вручную."
-        />
-      ) : (
-        <div className="space-y-4">
-          {portfolios.map((p) => {
+          <div className="mb-3 flex justify-end">
+            <button
+              onClick={() => setCreatingPortfolio(true)}
+              className="grid h-9 w-9 place-items-center rounded-full bg-surface-2 text-accent-bright"
+              aria-label="Добавить портфель"
+            >
+              <IconPlus width={18} height={18} />
+            </button>
+          </div>
+
+          {portfolios.length === 0 ? (
+            <EmptyState
+              icon="📈"
+              title="Портфелей нет"
+              hint="Создайте брокерский счёт или ИИС и добавьте акции. Котировки обновляются вручную."
+            />
+          ) : (
+            <div className="space-y-4">
+              {portfolios.map((p) => {
             const items = holdings.filter((h) => h.portfolioId === p.id);
             const pValue = items.reduce(
               (s, h) => s + holdingValue(h.quantity, h.lastPrice),
@@ -146,7 +165,9 @@ export function InvestmentsPage() {
               </div>
             );
           })}
-        </div>
+            </div>
+          )}
+        </>
       )}
 
       {creatingPortfolio && (
@@ -155,7 +176,7 @@ export function InvestmentsPage() {
       {editingHolding && (
         <HoldingForm holding={editingHolding} onClose={() => setEditingHolding(null)} />
       )}
-    </div>
+    </section>
   );
 }
 

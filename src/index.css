@@ -4,7 +4,7 @@
 
 @layer base {
   :root {
-    color-scheme: dark;
+    color-scheme: light;
   }
 
   html,
@@ -32,7 +32,7 @@
 
 @layer components {
   .card {
-    @apply bg-surface rounded-card p-4;
+    @apply bg-surface rounded-card border border-line p-4 shadow-card;
   }
 
   .btn {

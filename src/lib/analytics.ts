@@ -4,11 +4,11 @@ import {
   format,
   getDate,
   getMonth,
+  subMonths,
 } from 'date-fns';
 import { ru } from 'date-fns/locale';
 import type { Category, Transaction } from '@/db/types';
-import type { Period } from '@/store/ui';
-import type { Range } from './period';
+import { periodRange, type Period, type Range } from './period';
 
 export interface Totals {
   income: number;
@@ -177,6 +177,50 @@ export function trendSeries(
     if (idx < 0 || idx >= points.length) continue;
     if (t.type === 'income') points[idx].income += t.amount;
     else if (t.type === 'expense') points[idx].expense += t.amount;
+  }
+  return points;
+}
+
+export interface TransactionDayGroup {
+  dateKey: string; // 'yyyy-MM-dd', используется как React key
+  date: number; // timestamp начала дня — для форматирования заголовка
+  transactions: Transaction[];
+}
+
+/** Группирует операции по дням (от новых к старым), для ленты на экране «Операции». */
+export function groupTransactionsByDay(txns: Transaction[]): TransactionDayGroup[] {
+  const sorted = [...txns].sort((a, b) => b.date - a.date);
+  const groups = new Map<string, TransactionDayGroup>();
+  for (const t of sorted) {
+    const key = format(new Date(t.date), 'yyyy-MM-dd');
+    let group = groups.get(key);
+    if (!group) {
+      group = { dateKey: key, date: t.date, transactions: [] };
+      groups.set(key, group);
+    }
+    group.transactions.push(t);
+  }
+  return [...groups.values()];
+}
+
+/** Динамика доходов/расходов за N последних календарных месяцев (включая текущий),
+ *  для карточки «Динамика» на экране «Обзор». */
+export function trailingMonthsTrend(txns: Transaction[], monthsBack: number): TrendPoint[] {
+  const points: TrendPoint[] = [];
+  for (let i = monthsBack - 1; i >= 0; i--) {
+    const monthDate = subMonths(new Date(), i);
+    const range = periodRange(+monthDate, 'month');
+    const point: TrendPoint = {
+      label: format(monthDate, 'LLL', { locale: ru }),
+      income: 0,
+      expense: 0,
+    };
+    for (const t of txns) {
+      if (t.date < range.start || t.date > range.end) continue;
+      if (t.type === 'income') point.income += t.amount;
+      else if (t.type === 'expense') point.expense += t.amount;
+    }
+    points.push(point);
   }
   return points;
 }

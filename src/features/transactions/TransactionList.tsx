@@ -84,7 +84,7 @@ export function TransactionRow({ txn }: { txn: Transaction }) {
 
 export function TransactionList({ transactions }: { transactions: Transaction[] }) {
   return (
-    <div className="divide-y divide-white/5">
+    <div className="divide-y divide-line">
       {transactions.map((t) => (
         <TransactionRow key={t.id} txn={t} />
       ))}

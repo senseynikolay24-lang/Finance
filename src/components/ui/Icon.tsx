@@ -141,3 +141,25 @@ export const IconCoins = (p: P) => (
     <path d="M9 14v3c0 1.7 2.7 3 6 3s6-1.3 6-3v-3" />
   </svg>
 );
+
+export const IconList = (p: P) => (
+  <svg {...base(p)}>
+    <path d="M8 6h13M8 12h13M8 18h13" />
+    <path d="M3 6h.01M3 12h.01M3 18h.01" />
+  </svg>
+);
+
+export const IconSettings = (p: P) => (
+  <svg {...base(p)}>
+    <circle cx="12" cy="12" r="3.2" />
+    <path d="M12 3v2.4M12 18.6V21M21 12h-2.4M5.4 12H3M18 6l-1.7 1.7M7.7 16.3 6 18M18 18l-1.7-1.7M7.7 7.7 6 6" />
+  </svg>
+);
+
+export const IconCreditCard = (p: P) => (
+  <svg {...base(p)}>
+    <rect x="2" y="5" width="20" height="14" rx="2" />
+    <path d="M2 10h20" />
+    <path d="M6 15h4" />
+  </svg>
+);

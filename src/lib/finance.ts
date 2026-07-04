@@ -158,3 +158,28 @@ export function holdingPnLPct(avgPrice: number, lastPrice: number): number {
 export function clamp(v: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, v));
 }
+
+/** Чистый капитал = активы (счета+вклады+инвестиции) минус долги. */
+export function netWorth(
+  accountsTotal: number,
+  depositsTotal: number,
+  investmentsTotal: number,
+  debtsTotal: number,
+): number {
+  return accountsTotal + depositsTotal + investmentsTotal - debtsTotal;
+}
+
+/** Ориентировочные проценты за месяц по непогашенному остатку кредитной карты
+ *  (если долг не закрыт в течение льготного периода). */
+export function creditCardMonthlyInterest(
+  debtAmount: number,
+  annualRatePct: number,
+): number {
+  return debtAmount * (annualRatePct / 100) / 12;
+}
+
+/** «Индекс свободы» — доля дохода за период, которая не была потрачена, % (0..100). */
+export function savingsRatePct(income: number, expense: number): number {
+  if (income <= 0) return 0;
+  return clamp(((income - expense) / income) * 100, 0, 100);
+}

@@ -1,11 +1,14 @@
 import { useRef, useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
+import { useNavigate } from 'react-router-dom';
 import { db } from '@/db/db';
 import { exportData, importData } from '@/lib/backup';
 import { formatDate } from '@/lib/format';
 import { PageHeader } from '@/components/PageHeader';
+import { IconChevronRight, IconMenu } from '@/components/ui/Icon';
 
 export function SettingsPage() {
+  const navigate = useNavigate();
   const settings = useLiveQuery(() => db.settings.toArray(), [], []);
   const fileRef = useRef<HTMLInputElement>(null);
   const [msg, setMsg] = useState('');
@@ -43,6 +46,17 @@ export function SettingsPage() {
   return (
     <div>
       <PageHeader title="Настройки" />
+
+      <button
+        onClick={() => navigate('/categories')}
+        className="card mb-4 flex w-full items-center gap-3 text-left"
+      >
+        <span className="grid h-10 w-10 place-items-center rounded-full bg-surface-2 text-accent-bright">
+          <IconMenu width={18} height={18} />
+        </span>
+        <span className="flex-1 font-medium">Категории</span>
+        <IconChevronRight width={18} height={18} className="text-muted" />
+      </button>
 
       <div className="card mb-4">
         <label className="label">Ваше имя</label>

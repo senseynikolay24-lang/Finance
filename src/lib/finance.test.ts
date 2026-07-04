@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   amortizationSchedule,
   annuityPayment,
+  creditCardMonthlyInterest,
   debtProgress,
   depositIncome,
   depositMaturityValue,
@@ -9,6 +10,8 @@ import {
   holdingPnL,
   holdingPnLPct,
   holdingValue,
+  netWorth,
+  savingsRatePct,
   totalOverpayment,
 } from './finance';
 
@@ -99,5 +102,36 @@ describe('holdings', () => {
   });
   it('P/L убыток', () => {
     expect(holdingPnL(10, 250, 200)).toBe(-500);
+  });
+});
+
+describe('netWorth', () => {
+  it('активы минус долги', () => {
+    expect(netWorth(100_000, 50_000, 20_000, 30_000)).toBe(140_000);
+  });
+  it('может быть отрицательным при долгах больше активов', () => {
+    expect(netWorth(10_000, 0, 0, 50_000)).toBe(-40_000);
+  });
+});
+
+describe('creditCardMonthlyInterest', () => {
+  it('считает проценты за месяц по непогашенному остатку', () => {
+    // 50 000 долга под 24% годовых → 1000 в месяц
+    expect(creditCardMonthlyInterest(50_000, 24)).toBeCloseTo(1000, 5);
+  });
+  it('ноль при отсутствии долга', () => {
+    expect(creditCardMonthlyInterest(0, 24)).toBe(0);
+  });
+});
+
+describe('savingsRatePct', () => {
+  it('половина дохода отложена → 50%', () => {
+    expect(savingsRatePct(100_000, 50_000)).toBeCloseTo(50, 5);
+  });
+  it('расходы больше дохода → 0% (не уходит в минус)', () => {
+    expect(savingsRatePct(50_000, 80_000)).toBe(0);
+  });
+  it('нулевой доход → 0%', () => {
+    expect(savingsRatePct(0, 0)).toBe(0);
   });
 });

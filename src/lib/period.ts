@@ -16,7 +16,7 @@ import {
   subWeeks,
   addWeeks,
 } from 'date-fns';
-import type { Period } from '@/store/ui';
+export type Period = 'day' | 'week' | 'month' | 'year';
 
 export interface Range {
   start: number;

@@ -73,7 +73,7 @@ export function CategoriesPage() {
                 </button>
               </div>
               {children.length > 0 && (
-                <div className="mt-3 space-y-2 border-l border-white/10 pl-4">
+                <div className="mt-3 space-y-2 border-l border-line pl-4">
                   {children.map((c) => (
                     <button
                       key={c.id}
