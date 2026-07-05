@@ -3,20 +3,19 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { useNavigate } from 'react-router-dom';
 import { Bar, BarChart, Cell, Pie, PieChart, ResponsiveContainer, XAxis } from 'recharts';
 import { db } from '@/db/db';
-import { formatMoney } from '@/lib/format';
+import { formatMoney, monthTitle } from '@/lib/format';
 import { freedomColor, holdingValue, netWorth, savingsRatePct } from '@/lib/finance';
-import { periodRange } from '@/lib/period';
+import { periodRange, shiftPeriod } from '@/lib/period';
 import { categoryBreakdown, sumTotals, trailingMonthsTrend } from '@/lib/analytics';
 import { PALETTE, withAlpha } from '@/lib/theme';
 import { useCountUp } from '@/lib/useCountUp';
-import { useUI } from '@/store/ui';
 import { CircularProgress } from '@/components/ui/CircularProgress';
 import { Skeleton } from '@/components/ui/Skeleton';
 import {
   IconArrowDown,
   IconArrowUp,
   IconBank,
-  IconCash,
+  IconChevronLeft,
   IconChevronRight,
   IconClose,
   IconSettings,
@@ -52,7 +51,6 @@ function HeroCard({
 
 export function HomePage() {
   const navigate = useNavigate();
-  const openTxnModal = useUI((s) => s.openTxnModal);
   const [onboardingDismissed, setOnboardingDismissed] = useState(false);
 
   // Без третьего аргумента useLiveQuery вернёт undefined до готовности —
@@ -64,11 +62,13 @@ export function HomePage() {
   const deposits = useLiveQuery(() => db.deposits.toArray());
   const holdings = useLiveQuery(() => db.holdings.toArray());
   const credits = useLiveQuery(() => db.credits.toArray());
+  const simpleDebts = useLiveQuery(() => db.simpleDebts.toArray());
   const goals = useLiveQuery(() => db.goals.toArray());
   const categories = useLiveQuery(() => db.categories.toArray());
   const allTxns = useLiveQuery(() => db.transactions.toArray());
 
-  const monthRange = useMemo(() => periodRange(Date.now(), 'month'), []);
+  const [monthAnchor, setMonthAnchor] = useState(Date.now());
+  const monthRange = useMemo(() => periodRange(monthAnchor, 'month'), [monthAnchor]);
   const periodTxns = useLiveQuery(
     () =>
       db.transactions
@@ -83,6 +83,7 @@ export function HomePage() {
     deposits !== undefined &&
     holdings !== undefined &&
     credits !== undefined &&
+    simpleDebts !== undefined &&
     goals !== undefined &&
     categories !== undefined &&
     allTxns !== undefined &&
@@ -98,8 +99,18 @@ export function HomePage() {
     0,
   );
   const debtsTotal = (credits ?? []).reduce((s, c) => s + c.currentDebt, 0);
-  const grandTotal = accountsTotal + depositsTotal + investmentsTotal;
-  const capital = netWorth(accountsTotal, depositsTotal, investmentsTotal, debtsTotal);
+  const owedToMeTotal = (simpleDebts ?? [])
+    .filter((d) => d.direction === 'owed_to_me')
+    .reduce((s, d) => s + d.remaining, 0);
+  const iOweTotal = (simpleDebts ?? [])
+    .filter((d) => d.direction === 'i_owe')
+    .reduce((s, d) => s + d.remaining, 0);
+  const totalDebts = debtsTotal + iOweTotal;
+  const grandTotal = accountsTotal + depositsTotal + investmentsTotal + owedToMeTotal;
+  const capital =
+    netWorth(accountsTotal, depositsTotal, investmentsTotal, debtsTotal) +
+    owedToMeTotal -
+    iOweTotal;
 
   const { income, expense } = sumTotals(periodTxns ?? []);
   const periodBalance = income - expense;
@@ -170,7 +181,7 @@ export function HomePage() {
               1. Добавить счёт
             </button>
             <button
-              onClick={() => openTxnModal('expense')}
+              onClick={() => navigate('/ops')}
               className="flex-1 rounded-xl bg-surface-2 px-3 py-2 text-xs font-medium"
             >
               2. Записать трату
@@ -192,9 +203,9 @@ export function HomePage() {
             <p className="mt-1 text-2xl font-bold tracking-tight">
               {formatMoney(grandTotalAnim, 'RUB', { fraction: false })}
             </p>
-            {debtsTotal > 0 && (
+            {totalDebts > 0 && (
               <p className="mt-0.5 text-xs text-muted">
-                {formatMoney(grandTotal - debtsTotal, 'RUB', { fraction: false })} чистыми
+                {formatMoney(grandTotal - totalDebts, 'RUB', { fraction: false })} чистыми
               </p>
             )}
           </div>
@@ -204,9 +215,30 @@ export function HomePage() {
 
       {/* Баланс периода */}
       <HeroCard color={periodBalance < 0 ? '#E5383B' : '#1F8A4C'}>
-        <p className="text-[11px] font-bold uppercase tracking-widest text-muted">
-          Баланс периода
-        </p>
+        <div className="flex items-center justify-between">
+          <p className="text-[11px] font-bold uppercase tracking-widest text-muted">
+            Баланс периода
+          </p>
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() => setMonthAnchor((a) => shiftPeriod(a, 'month', -1))}
+              className="grid h-6 w-6 place-items-center rounded-full text-muted"
+              aria-label="Прошлый месяц"
+            >
+              <IconChevronLeft width={14} height={14} />
+            </button>
+            <span className="text-[11px] font-medium capitalize text-muted">
+              {monthTitle(monthAnchor)}
+            </span>
+            <button
+              onClick={() => setMonthAnchor((a) => shiftPeriod(a, 'month', 1))}
+              className="grid h-6 w-6 place-items-center rounded-full text-muted"
+              aria-label="Следующий месяц"
+            >
+              <IconChevronRight width={14} height={14} />
+            </button>
+          </div>
+        </div>
         <p
           className={`mt-1 text-4xl font-bold leading-none tracking-tight ${
             periodBalance < 0 ? 'text-accent-bright' : ''
@@ -345,55 +377,7 @@ export function HomePage() {
         </button>
       </div>
 
-      {/* Быстрые действия */}
-      <section className="grid grid-cols-3 gap-3">
-        <QuickAction
-          label="Доход"
-          Icon={IconArrowDown}
-          color="#1F8A4C"
-          onClick={() => openTxnModal('income')}
-        />
-        <QuickAction
-          label="Расход"
-          Icon={IconArrowUp}
-          color="#E5383B"
-          onClick={() => openTxnModal('expense')}
-        />
-        <QuickAction
-          label="Снятие"
-          Icon={IconCash}
-          color={PALETTE[0]}
-          onClick={() => openTxnModal('withdrawal')}
-        />
-      </section>
     </div>
-  );
-}
-
-function QuickAction({
-  label,
-  Icon,
-  color,
-  onClick,
-}: {
-  label: string;
-  Icon: typeof IconArrowUp;
-  color: string;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      onClick={onClick}
-      className="flex flex-col items-center gap-2 rounded-2xl border border-line bg-surface py-3 active:scale-95"
-    >
-      <span
-        className="grid h-10 w-10 place-items-center rounded-full"
-        style={{ backgroundColor: withAlpha(color, '1f'), color }}
-      >
-        <Icon width={20} height={20} />
-      </span>
-      <span className="text-xs text-muted">{label}</span>
-    </button>
   );
 }
 

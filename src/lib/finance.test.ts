@@ -13,6 +13,7 @@ import {
   holdingValue,
   netWorth,
   savingsRatePct,
+  scheduleBalanceAt,
   totalOverpayment,
 } from './finance';
 
@@ -149,5 +150,22 @@ describe('freedomColor', () => {
   it('60% и выше — income (зелёный)', () => {
     expect(freedomColor(60)).toBe('#1F8A4C');
     expect(freedomColor(100)).toBe('#1F8A4C');
+  });
+});
+
+describe('scheduleBalanceAt', () => {
+  it('elapsed=0 → полный остаток (принципал)', () => {
+    expect(scheduleBalanceAt(1_000_000, 12, 12, 'annuity', 0)).toBeCloseTo(1_000_000, 2);
+  });
+  it('elapsed=termMonths → остаток 0', () => {
+    expect(scheduleBalanceAt(1_000_000, 12, 12, 'annuity', 12)).toBeCloseTo(0, 4);
+  });
+  it('elapsed за пределами срока — не превышает 0', () => {
+    expect(scheduleBalanceAt(1_000_000, 12, 12, 'annuity', 24)).toBeCloseTo(0, 4);
+  });
+  it('на середине срока остаток меньше принципала', () => {
+    const half = scheduleBalanceAt(1_000_000, 12, 12, 'annuity', 6);
+    expect(half).toBeLessThan(1_000_000);
+    expect(half).toBeGreaterThan(0);
   });
 });

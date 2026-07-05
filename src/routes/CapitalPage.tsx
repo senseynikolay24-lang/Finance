@@ -11,6 +11,7 @@ import { AccountsSection } from './AccountsPage';
 import { DepositsSection } from './DepositsPage';
 import { InvestmentsSection } from './InvestmentsPage';
 import { CreditsSection } from './CreditsPage';
+import { SimpleDebtsSection } from './SimpleDebtsPage';
 
 // Цвета совпадают с тематическими цветами разделов Счета/Вклады/Инвестиции.
 const ALLOCATION_COLORS = [
@@ -24,12 +25,14 @@ export function CapitalPage() {
   const deposits = useLiveQuery(() => db.deposits.toArray());
   const holdings = useLiveQuery(() => db.holdings.toArray());
   const credits = useLiveQuery(() => db.credits.toArray());
+  const simpleDebts = useLiveQuery(() => db.simpleDebts.toArray());
 
   const ready =
     accounts !== undefined &&
     deposits !== undefined &&
     holdings !== undefined &&
-    credits !== undefined;
+    credits !== undefined &&
+    simpleDebts !== undefined;
 
   const accountsTotal = (accounts ?? [])
     .filter((a) => !a.isArchived)
@@ -40,9 +43,17 @@ export function CapitalPage() {
     0,
   );
   const debtsTotal = (credits ?? []).reduce((s, c) => s + c.currentDebt, 0);
+  const owedToMeTotal = (simpleDebts ?? [])
+    .filter((d) => d.direction === 'owed_to_me')
+    .reduce((s, d) => s + d.remaining, 0);
+  const iOweTotal = (simpleDebts ?? [])
+    .filter((d) => d.direction === 'i_owe')
+    .reduce((s, d) => s + d.remaining, 0);
 
-  const assetsTotal = accountsTotal + depositsTotal + investmentsTotal;
-  const capital = netWorth(accountsTotal, depositsTotal, investmentsTotal, debtsTotal);
+  const assetsTotal = accountsTotal + depositsTotal + investmentsTotal + owedToMeTotal;
+  const totalDebts = debtsTotal + iOweTotal;
+  const capital = netWorth(accountsTotal, depositsTotal, investmentsTotal, debtsTotal) +
+    owedToMeTotal - iOweTotal;
   const capitalAnim = useCountUp(capital);
 
   const allocation = useMemo(
@@ -84,7 +95,7 @@ export function CapitalPage() {
         <div className="card py-3">
           <p className="text-xs text-muted">Долги</p>
           <p className="text-lg font-semibold text-accent-bright">
-            {formatMoney(debtsTotal, 'RUB', { fraction: false })}
+            {formatMoney(totalDebts, 'RUB', { fraction: false })}
           </p>
         </div>
       </div>
@@ -134,6 +145,7 @@ export function CapitalPage() {
       <DepositsSection />
       <InvestmentsSection />
       <CreditsSection />
+      <SimpleDebtsSection />
     </div>
   );
 }

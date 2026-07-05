@@ -9,7 +9,9 @@ import type {
   Goal,
   Holding,
   Portfolio,
+  RecurringPayment,
   Settings,
+  SimpleDebt,
   Transaction,
 } from './types';
 
@@ -25,6 +27,8 @@ export class FinanceDB extends Dexie {
   holdings!: Table<Holding, number>;
   budgets!: Table<Budget, number>;
   settings!: Table<Settings, number>;
+  simpleDebts!: Table<SimpleDebt, number>;
+  recurringPayments!: Table<RecurringPayment, number>;
 
   constructor() {
     super('finance-db');
@@ -40,6 +44,10 @@ export class FinanceDB extends Dexie {
       holdings: '++id, portfolioId, ticker',
       budgets: '++id, categoryId, period',
       settings: '++id',
+    });
+    this.version(2).stores({
+      simpleDebts: '++id, direction, date',
+      recurringPayments: '++id, kind, isActive',
     });
   }
 }

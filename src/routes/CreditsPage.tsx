@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useNavigate } from 'react-router-dom';
+import { differenceInMonths } from 'date-fns';
 import { db } from '@/db/db';
-import type { CreditKind, PaymentType } from '@/db/types';
-import { debtProgress } from '@/lib/finance';
+import type { Credit, CreditKind, PaymentType } from '@/db/types';
+import { debtProgress, scheduleBalanceAt } from '@/lib/finance';
 import { formatMoney, formatPercent } from '@/lib/format';
 import { PALETTE, SECTION_COLOR, withAlpha } from '@/lib/theme';
 import { Modal } from '@/components/ui/Modal';
@@ -93,25 +94,54 @@ export function CreditsSection() {
   );
 }
 
-function CreditForm({ onClose }: { onClose: () => void }) {
-  const [name, setName] = useState('');
-  const [kind, setKind] = useState<CreditKind>('loan');
-  const [principal, setPrincipal] = useState('');
-  const [rate, setRate] = useState('');
-  const [term, setTerm] = useState('');
-  const [paymentType, setPaymentType] = useState<PaymentType>('annuity');
-  const [minPayment, setMinPayment] = useState('');
-  const [creditLimit, setCreditLimit] = useState('');
-  const [grace, setGrace] = useState('');
-  const [color] = useState(COLORS[0]);
-  const [startDate, setStartDate] = useState(new Date().toISOString().slice(0, 10));
+/** Форма создания/редактирования кредита. Передайте `credit`, чтобы открыть
+ *  в режиме редактирования (поля предзаполнены, сохранение — через update). */
+export function CreditForm({
+  credit,
+  onClose,
+}: {
+  credit?: Credit;
+  onClose: () => void;
+}) {
+  const isEdit = credit != null;
+  const [name, setName] = useState(credit?.name ?? '');
+  const [kind, setKind] = useState<CreditKind>(credit?.kind ?? 'loan');
+  const [principal, setPrincipal] = useState(String(credit?.principal ?? ''));
+  const [currentDebt, setCurrentDebt] = useState(String(credit?.currentDebt ?? ''));
+  const [rate, setRate] = useState(String(credit?.rate ?? ''));
+  const [term, setTerm] = useState(String(credit?.termMonths ?? ''));
+  const [paymentType, setPaymentType] = useState<PaymentType>(
+    credit?.paymentType ?? 'annuity',
+  );
+  const [minPayment, setMinPayment] = useState(String(credit?.minPayment ?? ''));
+  const [creditLimit, setCreditLimit] = useState(String(credit?.creditLimit ?? ''));
+  const [grace, setGrace] = useState(String(credit?.gracePeriodDays ?? ''));
+  const [color] = useState(credit?.color ?? COLORS[0]);
+  const [startDate, setStartDate] = useState(
+    credit ? new Date(credit.startDate).toISOString().slice(0, 10) : new Date().toISOString().slice(0, 10),
+  );
 
   const isCard = kind === 'credit_card';
+
+  function calcFromSchedule() {
+    const p = Number(principal) || 0;
+    const r = Number(rate) || 0;
+    const t = Number(term) || 0;
+    if (p <= 0 || t <= 0) return;
+    const elapsed = differenceInMonths(new Date(), new Date(startDate));
+    const balance = scheduleBalanceAt(p, r, t, paymentType, elapsed);
+    setCurrentDebt(String(Math.round(balance)));
+  }
 
   async function save() {
     if (!name.trim()) return;
     const p = Number(principal) || 0;
-    await db.credits.add({
+    const debt = isCard
+      ? Number(currentDebt) || 0
+      : currentDebt !== ''
+        ? Number(currentDebt) || 0
+        : p;
+    const data = {
       name: name.trim(),
       kind,
       principal: isCard ? Number(creditLimit) || 0 : p,
@@ -122,15 +152,17 @@ function CreditForm({ onClose }: { onClose: () => void }) {
       startDate: new Date(startDate).getTime(),
       creditLimit: isCard ? Number(creditLimit) || 0 : undefined,
       gracePeriodDays: isCard && grace ? Number(grace) : undefined,
-      currentDebt: p,
+      currentDebt: isCard ? Number(currentDebt) || 0 : debt,
       color,
-      createdAt: Date.now(),
-    });
+      createdAt: credit?.createdAt ?? Date.now(),
+    };
+    if (isEdit) await db.credits.update(credit.id!, data);
+    else await db.credits.add(data);
     onClose();
   }
 
   return (
-    <Modal open title="Новый кредит" onClose={onClose}>
+    <Modal open title={isEdit ? 'Кредит' : 'Новый кредит'} onClose={onClose}>
       <label className="label">Тип</label>
       <div className="mb-4 flex gap-2">
         {(Object.keys(KIND_LABEL) as CreditKind[]).map((k) => (
@@ -170,8 +202,8 @@ function CreditForm({ onClose }: { onClose: () => void }) {
               <input
                 type="number"
                 className="field"
-                value={principal}
-                onChange={(e) => setPrincipal(e.target.value)}
+                value={currentDebt}
+                onChange={(e) => setCurrentDebt(e.target.value)}
               />
             </div>
           </div>
@@ -254,15 +286,36 @@ function CreditForm({ onClose }: { onClose: () => void }) {
           <label className="label">Дата открытия</label>
           <input
             type="date"
-            className="field mb-5"
+            className="field mb-4"
             value={startDate}
             onChange={(e) => setStartDate(e.target.value)}
           />
+          <div className="mb-1 flex items-center justify-between">
+            <label className="label mb-0">Текущий остаток долга</label>
+            <button
+              onClick={calcFromSchedule}
+              className="text-xs font-medium text-accent-bright"
+              type="button"
+            >
+              Рассчитать по графику
+            </button>
+          </div>
+          <input
+            type="number"
+            className="field mb-1"
+            placeholder={principal || 'равен сумме кредита'}
+            value={currentDebt}
+            onChange={(e) => setCurrentDebt(e.target.value)}
+          />
+          <p className="mb-5 text-xs text-muted">
+            Если дата открытия в прошлом и часть уже выплачена — нажмите «Рассчитать
+            по графику» или введите остаток вручную.
+          </p>
         </>
       )}
 
       <button onClick={save} className="btn-accent w-full">
-        Добавить
+        {isEdit ? 'Сохранить' : 'Добавить'}
       </button>
     </Modal>
   );

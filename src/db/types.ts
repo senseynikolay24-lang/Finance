@@ -151,3 +151,31 @@ export interface Settings {
   userName: string;
   mainCurrency: Currency;
 }
+
+// Простой долг без процентов и графика: «я занял у кого-то» / «я дал в долг».
+export type DebtDirection = 'i_owe' | 'owed_to_me';
+
+export interface SimpleDebt {
+  id?: number;
+  direction: DebtDirection;
+  person: string; // имя человека
+  amount: number; // исходная сумма
+  remaining: number; // остаток долга
+  date: number;
+  note?: string;
+  color: string;
+  createdAt: number;
+}
+
+// Плановый повторяющийся платёж (аренда, подписки и т.п.) для бюджетирования.
+export interface RecurringPayment {
+  id?: number;
+  name: string;
+  amount: number;
+  categoryId?: number;
+  accountId: number;
+  dayOfMonth: number; // 1..28
+  kind: 'income' | 'expense';
+  isActive: boolean;
+  createdAt: number;
+}

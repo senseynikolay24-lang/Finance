@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useParams } from 'react-router-dom';
+import { addMonths } from 'date-fns';
 import { db } from '@/db/db';
 import { addCreditPayment } from '@/db/repo';
 import {
@@ -13,7 +14,8 @@ import { formatDate, formatMoney, formatPercent } from '@/lib/format';
 import { PageHeader } from '@/components/PageHeader';
 import { ProgressBar } from '@/components/ui/ProgressBar';
 import { Modal } from '@/components/ui/Modal';
-import { IconTrash } from '@/components/ui/Icon';
+import { IconEdit, IconTrash } from '@/components/ui/Icon';
+import { CreditForm } from './CreditsPage';
 
 export function CreditDetailPage() {
   const { id } = useParams();
@@ -26,6 +28,7 @@ export function CreditDetailPage() {
   );
   const [paying, setPaying] = useState(false);
   const [showSchedule, setShowSchedule] = useState(false);
+  const [editing, setEditing] = useState(false);
 
   const schedule = useMemo(() => {
     if (!credit || credit.kind === 'credit_card') return [];
@@ -68,13 +71,22 @@ export function CreditDetailPage() {
       <PageHeader
         title={credit.name}
         action={
-          <button
-            onClick={remove}
-            className="grid h-10 w-10 place-items-center rounded-full bg-surface text-muted"
-            aria-label="Удалить"
-          >
-            <IconTrash width={18} height={18} />
-          </button>
+          <div className="flex gap-2">
+            <button
+              onClick={() => setEditing(true)}
+              className="grid h-10 w-10 place-items-center rounded-full bg-surface text-muted"
+              aria-label="Редактировать"
+            >
+              <IconEdit width={18} height={18} />
+            </button>
+            <button
+              onClick={remove}
+              className="grid h-10 w-10 place-items-center rounded-full bg-surface text-muted"
+              aria-label="Удалить"
+            >
+              <IconTrash width={18} height={18} />
+            </button>
+          </div>
         }
       />
 
@@ -154,6 +166,8 @@ export function CreditDetailPage() {
         </div>
       )}
 
+      {editing && <CreditForm credit={credit} onClose={() => setEditing(false)} />}
+
       {paying && (
         <PaymentForm
           creditId={creditId}
@@ -169,7 +183,7 @@ export function CreditDetailPage() {
             <table className="w-full text-sm">
               <thead className="sticky top-0 bg-surface text-muted">
                 <tr className="text-left">
-                  <th className="py-2">№</th>
+                  <th className="py-2">Дата</th>
                   <th className="py-2 text-right">Платёж</th>
                   <th className="py-2 text-right">Тело</th>
                   <th className="py-2 text-right">%</th>
@@ -179,7 +193,9 @@ export function CreditDetailPage() {
               <tbody>
                 {schedule.map((r) => (
                   <tr key={r.month} className="border-t border-line">
-                    <td className="py-1.5">{r.month}</td>
+                    <td className="py-1.5">
+                      {formatDate(+addMonths(new Date(credit.startDate), r.month))}
+                    </td>
                     <td className="py-1.5 text-right">
                       {formatMoney(r.payment, 'RUB', { fraction: false })}
                     </td>

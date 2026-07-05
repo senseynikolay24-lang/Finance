@@ -3,12 +3,14 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { Bar, BarChart, ResponsiveContainer, Tooltip, XAxis } from 'recharts';
 import { db } from '@/db/db';
 import { periodRange, type Period } from '@/lib/period';
-import { groupTransactionsByDay, sumTotals, trendSeries } from '@/lib/analytics';
+import { categoryBreakdown, groupTransactionsByDay, sumTotals, trendSeries } from '@/lib/analytics';
 import { formatDate, formatMoney } from '@/lib/format';
 import { PALETTE } from '@/lib/theme';
 import { TransactionRow } from '@/features/transactions/TransactionList';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { Skeleton } from '@/components/ui/Skeleton';
+import { ProgressBar } from '@/components/ui/ProgressBar';
+import { BudgetSection } from '@/features/budget/BudgetSection';
 
 type Preset = 'day' | 'week' | 'month' | 'year' | 'all';
 
@@ -65,9 +67,58 @@ export function OperationsPage() {
   );
   const groups = useMemo(() => groupTransactionsByDay(rows), [rows]);
 
+  // Индикатор лимита бюджета — всегда по текущему календарному месяцу,
+  // независимо от фильтра дат выше (лимиты в БД месячные).
+  const currentMonthRange = useMemo(() => periodRange(Date.now(), 'month'), []);
+  const currentMonthKey = useMemo(() => {
+    const d = new Date(currentMonthRange.start);
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+  }, [currentMonthRange]);
+  const monthBudgets = useLiveQuery(
+    () => db.budgets.where('period').equals(currentMonthKey).toArray(),
+    [currentMonthKey],
+    [],
+  );
+  const monthCategories = useLiveQuery(() => db.categories.toArray(), [], []);
+  const monthTxns = useLiveQuery(
+    () =>
+      db.transactions
+        .where('date')
+        .between(currentMonthRange.start, currentMonthRange.end, true, true)
+        .toArray(),
+    [currentMonthRange.start, currentMonthRange.end],
+    [],
+  );
+  const totalPlanned = monthBudgets.reduce((s, b) => s + b.plannedAmount, 0);
+  const totalSpent = categoryBreakdown(monthTxns, monthCategories, 'expense').reduce(
+    (s, c) => s + c.amount,
+    0,
+  );
+
+  function scrollToBudget() {
+    document.getElementById('budget-limits')?.scrollIntoView({ behavior: 'smooth' });
+  }
+
   return (
     <div className="space-y-5">
       <h1 className="pt-1 text-2xl font-bold">Операции</h1>
+
+      {/* Индикатор лимита бюджета за текущий месяц */}
+      {totalPlanned > 0 && (
+        <button onClick={scrollToBudget} className="card block w-full text-left">
+          <div className="mb-2 flex justify-between text-sm">
+            <span className="text-muted">Бюджет на этот месяц</span>
+            <span className="font-semibold">
+              {formatMoney(totalSpent, 'RUB', { fraction: false })} /{' '}
+              {formatMoney(totalPlanned, 'RUB', { fraction: false })}
+            </span>
+          </div>
+          <ProgressBar
+            value={(totalSpent / totalPlanned) * 100}
+            color={totalSpent > totalPlanned ? '#E5383B' : '#1F8A4C'}
+          />
+        </button>
+      )}
 
       {/* Быстрые пресеты */}
       <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1">
@@ -195,6 +246,8 @@ export function OperationsPage() {
           </div>
         )}
       </div>
+
+      <BudgetSection />
     </div>
   );
 }
