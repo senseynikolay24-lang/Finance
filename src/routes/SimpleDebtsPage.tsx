@@ -8,7 +8,7 @@ import { PALETTE, withAlpha } from '@/lib/theme';
 import { Modal } from '@/components/ui/Modal';
 import { ProgressBar } from '@/components/ui/ProgressBar';
 import { EmptyState } from '@/components/ui/EmptyState';
-import { IconPlus } from '@/components/ui/Icon';
+import { IconChevronRight, IconPlus } from '@/components/ui/Icon';
 
 const DIRECTION_LABEL: Record<DebtDirection, string> = {
   i_owe: 'Я занял',
@@ -23,6 +23,7 @@ export function SimpleDebtsSection() {
   const debts = useLiveQuery(() => db.simpleDebts.toArray(), [], []);
   const [editing, setEditing] = useState<Partial<SimpleDebt> | null>(null);
   const [repaying, setRepaying] = useState<SimpleDebt | null>(null);
+  const [listOpen, setListOpen] = useState(true);
 
   const iOweTotal = debts
     .filter((d) => d.direction === 'i_owe')
@@ -35,14 +36,29 @@ export function SimpleDebtsSection() {
     <section>
       <div className="mb-2 flex items-center justify-between">
         <h2 className="font-semibold">Взял / дал в долг</h2>
-        <button
-          onClick={() => setEditing({})}
-          className="grid h-9 w-9 place-items-center rounded-full"
-          style={{ backgroundColor: withAlpha(SECTION, '1f'), color: SECTION }}
-          aria-label="Добавить долг"
-        >
-          <IconPlus width={18} height={18} />
-        </button>
+        <div className="flex items-center gap-1">
+          <button
+            onClick={() => setEditing({})}
+            className="grid h-9 w-9 place-items-center rounded-full"
+            style={{ backgroundColor: withAlpha(SECTION, '1f'), color: SECTION }}
+            aria-label="Добавить долг"
+          >
+            <IconPlus width={18} height={18} />
+          </button>
+          {debts.length > 0 && (
+            <button
+              onClick={() => setListOpen((o) => !o)}
+              className="grid h-9 w-9 place-items-center rounded-full text-muted"
+              aria-label={listOpen ? 'Свернуть' : 'Развернуть'}
+            >
+              <IconChevronRight
+                width={18}
+                height={18}
+                className={`transition-transform ${listOpen ? 'rotate-90' : ''}`}
+              />
+            </button>
+          )}
+        </div>
       </div>
 
       {(iOweTotal > 0 || owedToMeTotal > 0) && (
@@ -69,7 +85,7 @@ export function SimpleDebtsSection() {
           hint="Запишите, если вы заняли денег у кого-то или дали в долг"
           color={SECTION}
         />
-      ) : (
+      ) : listOpen ? (
         <div className="space-y-3">
           {debts.map((d) => {
             const progress =
@@ -115,7 +131,7 @@ export function SimpleDebtsSection() {
             );
           })}
         </div>
-      )}
+      ) : null}
 
       {editing && <SimpleDebtForm debt={editing} onClose={() => setEditing(null)} />}
       {repaying && <RepayForm debt={repaying} onClose={() => setRepaying(null)} />}

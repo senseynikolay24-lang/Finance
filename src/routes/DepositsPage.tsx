@@ -8,7 +8,7 @@ import { addMonths } from 'date-fns';
 import { PALETTE, SECTION_COLOR, withAlpha } from '@/lib/theme';
 import { Modal } from '@/components/ui/Modal';
 import { EmptyState } from '@/components/ui/EmptyState';
-import { IconPlus, IconTrash } from '@/components/ui/Icon';
+import { IconChevronRight, IconPlus, IconTrash } from '@/components/ui/Icon';
 
 const CAP_LABEL: Record<Capitalization, string> = {
   none: 'Без капитализации',
@@ -24,6 +24,7 @@ const SECTION = SECTION_COLOR.deposits;
 export function DepositsSection() {
   const deposits = useLiveQuery(() => db.deposits.toArray(), [], []);
   const [editing, setEditing] = useState<Partial<Deposit> | null>(null);
+  const [listOpen, setListOpen] = useState(true);
 
   const totalNow = deposits.reduce((s, d) => s + d.amount, 0);
   const totalMaturity = deposits.reduce(
@@ -35,14 +36,29 @@ export function DepositsSection() {
     <section>
       <div className="mb-2 flex items-center justify-between">
         <h2 className="font-semibold">Вклады и накопления</h2>
-        <button
-          onClick={() => setEditing({})}
-          className="grid h-9 w-9 place-items-center rounded-full"
-          style={{ backgroundColor: withAlpha(SECTION, '1f'), color: SECTION }}
-          aria-label="Добавить вклад"
-        >
-          <IconPlus width={18} height={18} />
-        </button>
+        <div className="flex items-center gap-1">
+          <button
+            onClick={() => setEditing({})}
+            className="grid h-9 w-9 place-items-center rounded-full"
+            style={{ backgroundColor: withAlpha(SECTION, '1f'), color: SECTION }}
+            aria-label="Добавить вклад"
+          >
+            <IconPlus width={18} height={18} />
+          </button>
+          {deposits.length > 0 && (
+            <button
+              onClick={() => setListOpen((o) => !o)}
+              className="grid h-9 w-9 place-items-center rounded-full text-muted"
+              aria-label={listOpen ? 'Свернуть' : 'Развернуть'}
+            >
+              <IconChevronRight
+                width={18}
+                height={18}
+                className={`transition-transform ${listOpen ? 'rotate-90' : ''}`}
+              />
+            </button>
+          )}
+        </div>
       </div>
 
       {deposits.length > 0 && (
@@ -69,7 +85,7 @@ export function DepositsSection() {
           hint="Добавьте депозит со ставкой и сроком, чтобы видеть будущий доход"
           color={SECTION}
         />
-      ) : (
+      ) : listOpen ? (
         <div className="space-y-3">
           {deposits.map((d) => {
             const income = depositIncome(d.amount, d.rate, d.termMonths, d.capitalization);
@@ -95,7 +111,7 @@ export function DepositsSection() {
             );
           })}
         </div>
-      )}
+      ) : null}
 
       {editing && <DepositForm deposit={editing} onClose={() => setEditing(null)} />}
     </section>

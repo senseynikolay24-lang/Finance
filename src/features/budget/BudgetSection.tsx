@@ -45,6 +45,7 @@ export function BudgetSection() {
   const [editingRecurring, setEditingRecurring] = useState<Partial<RecurringPayment> | null>(
     null,
   );
+  const [limitsOpen, setLimitsOpen] = useState(true);
 
   const spentByCat = useMemo(() => {
     const map = new Map<number, number>();
@@ -200,11 +201,24 @@ export function BudgetSection() {
 
       {/* Лимиты по категориям */}
       <div>
-        <p className="mb-3 text-sm text-muted">
-          Задайте лимит на месяц для каждой категории расходов
-        </p>
-        <div className="space-y-3">
-          {expenseParents.map((cat) => {
+        <button
+          onClick={() => setLimitsOpen((o) => !o)}
+          className="mb-3 flex w-full items-center justify-between"
+        >
+          <h3 className="font-semibold">Лимиты по категориям</h3>
+          <IconChevronRight
+            width={18}
+            height={18}
+            className={`text-muted transition-transform ${limitsOpen ? 'rotate-90' : ''}`}
+          />
+        </button>
+        {limitsOpen && (
+          <>
+            <p className="mb-3 text-sm text-muted">
+              Задайте лимит на месяц для каждой категории расходов
+            </p>
+            <div className="space-y-3">
+              {expenseParents.map((cat) => {
             const planned = budgetByCat.get(cat.id!)?.plannedAmount ?? 0;
             const spent = spentByCat.get(cat.id!) ?? 0;
             const pct = planned > 0 ? (spent / planned) * 100 : 0;
@@ -243,8 +257,10 @@ export function BudgetSection() {
                 )}
               </div>
             );
-          })}
-        </div>
+              })}
+            </div>
+          </>
+        )}
       </div>
 
       {/* Плановые платежи */}

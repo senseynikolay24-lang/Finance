@@ -9,7 +9,7 @@ import { PALETTE, SECTION_COLOR } from '@/lib/theme';
 import { Modal } from '@/components/ui/Modal';
 import { ProgressBar } from '@/components/ui/ProgressBar';
 import { EmptyState } from '@/components/ui/EmptyState';
-import { IconCreditCard, IconEdit, IconPlus } from '@/components/ui/Icon';
+import { IconChevronRight, IconCreditCard, IconEdit, IconPlus } from '@/components/ui/Icon';
 
 const TYPE_LABEL: Record<AccountType, string> = {
   card: 'Карта',
@@ -25,6 +25,7 @@ export function AccountsSection() {
   const accounts = useLiveQuery(() => db.accounts.toArray(), [], []);
   const categories = useLiveQuery(() => db.categories.toArray(), [], []);
   const [editing, setEditing] = useState<Partial<Account> | null>(null);
+  const [listOpen, setListOpen] = useState(true);
 
   const interestCategoryId = categories.find(
     (c) => c.name === INTEREST_CATEGORY_NAME && c.kind === 'expense',
@@ -48,18 +49,33 @@ export function AccountsSection() {
     <section>
       <div className="mb-2 flex items-center justify-between">
         <h2 className="font-semibold">Карты и счета</h2>
-        <button
-          onClick={() => setEditing({})}
-          className="grid h-9 w-9 place-items-center rounded-full bg-surface-2 text-accent-bright"
-          aria-label="Добавить счёт"
-        >
-          <IconPlus width={18} height={18} />
-        </button>
+        <div className="flex items-center gap-1">
+          <button
+            onClick={() => setEditing({})}
+            className="grid h-9 w-9 place-items-center rounded-full bg-surface-2 text-accent-bright"
+            aria-label="Добавить счёт"
+          >
+            <IconPlus width={18} height={18} />
+          </button>
+          {accounts.length > 0 && (
+            <button
+              onClick={() => setListOpen((o) => !o)}
+              className="grid h-9 w-9 place-items-center rounded-full text-muted"
+              aria-label={listOpen ? 'Свернуть' : 'Развернуть'}
+            >
+              <IconChevronRight
+                width={18}
+                height={18}
+                className={`transition-transform ${listOpen ? 'rotate-90' : ''}`}
+              />
+            </button>
+          )}
+        </div>
       </div>
 
       {accounts.length === 0 ? (
         <EmptyState icon="💳" title="Счетов пока нет" color={SECTION_COLOR.accounts} />
-      ) : (
+      ) : listOpen ? (
         <div className="space-y-3">
           {accounts.map((a) => (
             <div key={a.id} className="card">
@@ -96,7 +112,7 @@ export function AccountsSection() {
             </div>
           ))}
         </div>
-      )}
+      ) : null}
 
       {editing && <AccountForm account={editing} onClose={() => setEditing(null)} />}
     </section>

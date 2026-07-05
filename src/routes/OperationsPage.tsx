@@ -11,6 +11,7 @@ import { EmptyState } from '@/components/ui/EmptyState';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { ProgressBar } from '@/components/ui/ProgressBar';
 import { BudgetSection } from '@/features/budget/BudgetSection';
+import { IconChevronRight } from '@/components/ui/Icon';
 
 type Preset = 'day' | 'week' | 'month' | 'year' | 'all';
 
@@ -31,6 +32,7 @@ function granularityFor(start: number, end: number): Period {
 
 export function OperationsPage() {
   const [preset, setPreset] = useState<Preset>('month');
+  const [feedOpen, setFeedOpen] = useState(true);
   const [customFrom, setCustomFrom] = useState('');
   const [customTo, setCustomTo] = useState('');
   const [useCustom, setUseCustom] = useState(false);
@@ -217,7 +219,19 @@ export function OperationsPage() {
 
       {/* Лента операций по дням */}
       <div>
-        <h2 className="mb-2 font-semibold">Операции</h2>
+        <button
+          onClick={() => setFeedOpen((o) => !o)}
+          className="mb-2 flex w-full items-center justify-between"
+        >
+          <h2 className="font-semibold">Операции</h2>
+          {groups.length > 0 && (
+            <IconChevronRight
+              width={18}
+              height={18}
+              className={`text-muted transition-transform ${feedOpen ? 'rotate-90' : ''}`}
+            />
+          )}
+        </button>
         {loading ? (
           <div className="space-y-2">
             <Skeleton className="h-14 w-full" />
@@ -231,7 +245,7 @@ export function OperationsPage() {
             hint="Измените период или добавьте операцию через «+»"
             color={PALETTE[0]}
           />
-        ) : (
+        ) : feedOpen ? (
           <div className="space-y-4">
             {groups.map((g) => (
               <div key={g.dateKey}>
@@ -244,7 +258,7 @@ export function OperationsPage() {
               </div>
             ))}
           </div>
-        )}
+        ) : null}
       </div>
 
       <BudgetSection />

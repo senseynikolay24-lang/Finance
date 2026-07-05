@@ -10,7 +10,7 @@ import { PALETTE, SECTION_COLOR, withAlpha } from '@/lib/theme';
 import { Modal } from '@/components/ui/Modal';
 import { ProgressBar } from '@/components/ui/ProgressBar';
 import { EmptyState } from '@/components/ui/EmptyState';
-import { IconPlus } from '@/components/ui/Icon';
+import { IconChevronRight, IconPlus } from '@/components/ui/Icon';
 
 const KIND_LABEL: Record<CreditKind, string> = {
   loan: 'Кредит',
@@ -25,6 +25,7 @@ export function CreditsSection() {
   const navigate = useNavigate();
   const credits = useLiveQuery(() => db.credits.toArray(), [], []);
   const [creating, setCreating] = useState(false);
+  const [listOpen, setListOpen] = useState(true);
 
   const totalDebt = credits.reduce((s, c) => s + c.currentDebt, 0);
 
@@ -32,14 +33,29 @@ export function CreditsSection() {
     <section>
       <div className="mb-2 flex items-center justify-between">
         <h2 className="font-semibold">Кредиты и долги</h2>
-        <button
-          onClick={() => setCreating(true)}
-          className="grid h-9 w-9 place-items-center rounded-full"
-          style={{ backgroundColor: withAlpha(SECTION, '1f'), color: SECTION }}
-          aria-label="Добавить кредит"
-        >
-          <IconPlus width={18} height={18} />
-        </button>
+        <div className="flex items-center gap-1">
+          <button
+            onClick={() => setCreating(true)}
+            className="grid h-9 w-9 place-items-center rounded-full"
+            style={{ backgroundColor: withAlpha(SECTION, '1f'), color: SECTION }}
+            aria-label="Добавить кредит"
+          >
+            <IconPlus width={18} height={18} />
+          </button>
+          {credits.length > 0 && (
+            <button
+              onClick={() => setListOpen((o) => !o)}
+              className="grid h-9 w-9 place-items-center rounded-full text-muted"
+              aria-label={listOpen ? 'Свернуть' : 'Развернуть'}
+            >
+              <IconChevronRight
+                width={18}
+                height={18}
+                className={`transition-transform ${listOpen ? 'rotate-90' : ''}`}
+              />
+            </button>
+          )}
+        </div>
       </div>
 
       {credits.length > 0 && (
@@ -58,7 +74,7 @@ export function CreditsSection() {
           hint="Добавьте кредит, ипотеку или кредитную карту, чтобы отслеживать закрытие долга"
           color={SECTION}
         />
-      ) : (
+      ) : listOpen ? (
         <div className="space-y-3">
           {credits.map((c) => {
             const progress = debtProgress(c.principal, c.currentDebt);
@@ -87,7 +103,7 @@ export function CreditsSection() {
             );
           })}
         </div>
-      )}
+      ) : null}
 
       {creating && <CreditForm onClose={() => setCreating(false)} />}
     </section>
