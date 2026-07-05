@@ -45,23 +45,21 @@ export function DepositsSection() {
           >
             <IconPlus width={18} height={18} />
           </button>
-          {deposits.length > 0 && (
-            <button
-              onClick={() => setListOpen((o) => !o)}
-              className="grid h-9 w-9 place-items-center rounded-full text-muted"
-              aria-label={listOpen ? 'Свернуть' : 'Развернуть'}
-            >
-              <IconChevronRight
-                width={18}
-                height={18}
-                className={`transition-transform ${listOpen ? 'rotate-90' : ''}`}
-              />
-            </button>
-          )}
+          <button
+            onClick={() => setListOpen((o) => !o)}
+            className="grid h-9 w-9 place-items-center rounded-full text-muted"
+            aria-label={listOpen ? 'Свернуть' : 'Развернуть'}
+          >
+            <IconChevronRight
+              width={18}
+              height={18}
+              className={`transition-transform ${listOpen ? 'rotate-90' : ''}`}
+            />
+          </button>
         </div>
       </div>
 
-      {deposits.length > 0 && (
+      {listOpen && deposits.length > 0 && (
         <div className="mb-4 grid grid-cols-2 gap-3">
           <div className="card py-3">
             <p className="text-xs text-muted">Вложено</p>
@@ -78,14 +76,14 @@ export function DepositsSection() {
         </div>
       )}
 
-      {deposits.length === 0 ? (
+      {!listOpen ? null : deposits.length === 0 ? (
         <EmptyState
           icon="🪙"
           title="Вкладов нет"
           hint="Добавьте депозит со ставкой и сроком, чтобы видеть будущий доход"
           color={SECTION}
         />
-      ) : listOpen ? (
+      ) : (
         <div className="space-y-3">
           {deposits.map((d) => {
             const income = depositIncome(d.amount, d.rate, d.termMonths, d.capitalization);
@@ -111,7 +109,7 @@ export function DepositsSection() {
             );
           })}
         </div>
-      ) : null}
+      )}
 
       {editing && <DepositForm deposit={editing} onClose={() => setEditing(null)} />}
     </section>

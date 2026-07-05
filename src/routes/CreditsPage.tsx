@@ -42,23 +42,21 @@ export function CreditsSection() {
           >
             <IconPlus width={18} height={18} />
           </button>
-          {credits.length > 0 && (
-            <button
-              onClick={() => setListOpen((o) => !o)}
-              className="grid h-9 w-9 place-items-center rounded-full text-muted"
-              aria-label={listOpen ? 'Свернуть' : 'Развернуть'}
-            >
-              <IconChevronRight
-                width={18}
-                height={18}
-                className={`transition-transform ${listOpen ? 'rotate-90' : ''}`}
-              />
-            </button>
-          )}
+          <button
+            onClick={() => setListOpen((o) => !o)}
+            className="grid h-9 w-9 place-items-center rounded-full text-muted"
+            aria-label={listOpen ? 'Свернуть' : 'Развернуть'}
+          >
+            <IconChevronRight
+              width={18}
+              height={18}
+              className={`transition-transform ${listOpen ? 'rotate-90' : ''}`}
+            />
+          </button>
         </div>
       </div>
 
-      {credits.length > 0 && (
+      {listOpen && credits.length > 0 && (
         <div className="card mb-4">
           <p className="text-sm text-muted">Общий долг</p>
           <p className="text-2xl font-bold text-accent-bright">
@@ -67,14 +65,14 @@ export function CreditsSection() {
         </div>
       )}
 
-      {credits.length === 0 ? (
+      {!listOpen ? null : credits.length === 0 ? (
         <EmptyState
           icon="🏦"
           title="Кредитов нет"
           hint="Добавьте кредит, ипотеку или кредитную карту, чтобы отслеживать закрытие долга"
           color={SECTION}
         />
-      ) : listOpen ? (
+      ) : (
         <div className="space-y-3">
           {credits.map((c) => {
             const progress = debtProgress(c.principal, c.currentDebt);
@@ -103,7 +101,7 @@ export function CreditsSection() {
             );
           })}
         </div>
-      ) : null}
+      )}
 
       {creating && <CreditForm onClose={() => setCreating(false)} />}
     </section>

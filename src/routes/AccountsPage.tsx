@@ -57,25 +57,23 @@ export function AccountsSection() {
           >
             <IconPlus width={18} height={18} />
           </button>
-          {accounts.length > 0 && (
-            <button
-              onClick={() => setListOpen((o) => !o)}
-              className="grid h-9 w-9 place-items-center rounded-full text-muted"
-              aria-label={listOpen ? 'Свернуть' : 'Развернуть'}
-            >
-              <IconChevronRight
-                width={18}
-                height={18}
-                className={`transition-transform ${listOpen ? 'rotate-90' : ''}`}
-              />
-            </button>
-          )}
+          <button
+            onClick={() => setListOpen((o) => !o)}
+            className="grid h-9 w-9 place-items-center rounded-full text-muted"
+            aria-label={listOpen ? 'Свернуть' : 'Развернуть'}
+          >
+            <IconChevronRight
+              width={18}
+              height={18}
+              className={`transition-transform ${listOpen ? 'rotate-90' : ''}`}
+            />
+          </button>
         </div>
       </div>
 
-      {accounts.length === 0 ? (
+      {!listOpen ? null : accounts.length === 0 ? (
         <EmptyState icon="💳" title="Счетов пока нет" color={SECTION_COLOR.accounts} />
-      ) : listOpen ? (
+      ) : (
         <div className="space-y-3">
           {accounts.map((a) => (
             <div key={a.id} className="card">
@@ -112,7 +110,7 @@ export function AccountsSection() {
             </div>
           ))}
         </div>
-      ) : null}
+      )}
 
       {editing && <AccountForm account={editing} onClose={() => setEditing(null)} />}
     </section>

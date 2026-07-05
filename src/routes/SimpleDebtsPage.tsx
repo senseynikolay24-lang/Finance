@@ -45,23 +45,21 @@ export function SimpleDebtsSection() {
           >
             <IconPlus width={18} height={18} />
           </button>
-          {debts.length > 0 && (
-            <button
-              onClick={() => setListOpen((o) => !o)}
-              className="grid h-9 w-9 place-items-center rounded-full text-muted"
-              aria-label={listOpen ? 'Свернуть' : 'Развернуть'}
-            >
-              <IconChevronRight
-                width={18}
-                height={18}
-                className={`transition-transform ${listOpen ? 'rotate-90' : ''}`}
-              />
-            </button>
-          )}
+          <button
+            onClick={() => setListOpen((o) => !o)}
+            className="grid h-9 w-9 place-items-center rounded-full text-muted"
+            aria-label={listOpen ? 'Свернуть' : 'Развернуть'}
+          >
+            <IconChevronRight
+              width={18}
+              height={18}
+              className={`transition-transform ${listOpen ? 'rotate-90' : ''}`}
+            />
+          </button>
         </div>
       </div>
 
-      {(iOweTotal > 0 || owedToMeTotal > 0) && (
+      {listOpen && (iOweTotal > 0 || owedToMeTotal > 0) && (
         <div className="mb-4 grid grid-cols-2 gap-3">
           <div className="card py-3">
             <p className="text-xs text-muted">Мне должны</p>
@@ -78,14 +76,14 @@ export function SimpleDebtsSection() {
         </div>
       )}
 
-      {debts.length === 0 ? (
+      {!listOpen ? null : debts.length === 0 ? (
         <EmptyState
           icon="🤝"
           title="Долгов нет"
           hint="Запишите, если вы заняли денег у кого-то или дали в долг"
           color={SECTION}
         />
-      ) : listOpen ? (
+      ) : (
         <div className="space-y-3">
           {debts.map((d) => {
             const progress =
@@ -131,7 +129,7 @@ export function SimpleDebtsSection() {
             );
           })}
         </div>
-      ) : null}
+      )}
 
       {editing && <SimpleDebtForm debt={editing} onClose={() => setEditing(null)} />}
       {repaying && <RepayForm debt={repaying} onClose={() => setRepaying(null)} />}
