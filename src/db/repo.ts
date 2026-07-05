@@ -124,3 +124,12 @@ export async function contributeToGoal(goalId: number, amount: number): Promise<
     currentAmount: Math.max(0, goal.currentAmount + amount),
   });
 }
+
+/** Уменьшает остаток простого долга на сумму возврата. */
+export async function repaySimpleDebt(debtId: number, amount: number): Promise<void> {
+  const debt = await db.simpleDebts.get(debtId);
+  if (!debt) return;
+  await db.simpleDebts.update(debtId, {
+    remaining: Math.max(0, debt.remaining - amount),
+  });
+}

@@ -83,6 +83,23 @@ export function totalOverpayment(
   );
 }
 
+/** Остаток долга «как будто по графику», если с даты начала прошло elapsedMonths
+ *  месяцев. Используется, чтобы подсказать текущий долг для кредита/ипотеки,
+ *  открытых задним числом. Не применяется автоматически — только по запросу
+ *  пользователя, т.к. реальные платежи могли отличаться от графика. */
+export function scheduleBalanceAt(
+  principal: number,
+  annualRatePct: number,
+  termMonths: number,
+  paymentType: 'annuity' | 'differentiated',
+  elapsedMonths: number,
+): number {
+  const rows = amortizationSchedule(principal, annualRatePct, termMonths, paymentType);
+  if (rows.length === 0) return principal;
+  const idx = clamp(elapsedMonths, 0, rows.length) - 1;
+  return idx < 0 ? principal : rows[idx].balance;
+}
+
 /** Прогресс закрытия долга в % (0..100). */
 export function debtProgress(principal: number, currentDebt: number): number {
   if (principal <= 0) return 100;
