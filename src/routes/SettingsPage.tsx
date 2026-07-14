@@ -4,15 +4,33 @@ import { useNavigate } from 'react-router-dom';
 import { db } from '@/db/db';
 import { exportData, importData } from '@/lib/backup';
 import { formatDate } from '@/lib/format';
+import {
+  getNotificationPermission,
+  isNotificationSupported,
+  requestNotificationPermission,
+} from '@/lib/notifications';
 import { PageHeader } from '@/components/PageHeader';
 import { IconChevronRight, IconMenu } from '@/components/ui/Icon';
+
+const PERMISSION_LABEL: Record<NotificationPermission | 'unsupported', string> = {
+  granted: 'Включены',
+  denied: 'Отклонены (разрешите в настройках браузера)',
+  default: 'Не запрошены',
+  unsupported: 'Не поддерживаются этим браузером',
+};
 
 export function SettingsPage() {
   const navigate = useNavigate();
   const settings = useLiveQuery(() => db.settings.toArray(), [], []);
   const fileRef = useRef<HTMLInputElement>(null);
   const [msg, setMsg] = useState('');
+  const [notifPermission, setNotifPermission] = useState(getNotificationPermission());
   const s = settings[0];
+
+  async function enableNotifications() {
+    const perm = await requestNotificationPermission();
+    setNotifPermission(perm);
+  }
 
   async function saveName(name: string) {
     if (s?.id != null) await db.settings.update(s.id, { userName: name });
@@ -93,6 +111,25 @@ export function SettingsPage() {
           onChange={handleImport}
         />
         {msg && <p className="mt-3 text-sm text-income">{msg}</p>}
+      </div>
+
+      <div className="card mb-4">
+        <h2 className="mb-1 font-semibold">Напоминания о плановых платежах</h2>
+        <p className="mb-4 text-sm text-muted">
+          Уведомление придёт, если приложение открыто в браузере и до дня платежа
+          остался день или он наступил сегодня. Работать в закрытом приложении не
+          может — это ограничение офлайн-версии без сервера.
+        </p>
+        <div className="flex items-center justify-between">
+          <span className="text-sm text-muted">
+            Статус: {PERMISSION_LABEL[notifPermission]}
+          </span>
+          {isNotificationSupported() && notifPermission !== 'granted' && (
+            <button onClick={enableNotifications} className="btn-accent">
+              Включить
+            </button>
+          )}
+        </div>
       </div>
 
       <div className="card">

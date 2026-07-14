@@ -3,9 +3,10 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { Cell, Pie, PieChart, ResponsiveContainer } from 'recharts';
 import { db } from '@/db/db';
 import { addTransaction } from '@/db/repo';
-import type { RecurringPayment, TransactionType } from '@/db/types';
+import type { RecurringPayment } from '@/db/types';
 import { periodRange, shiftPeriod } from '@/lib/period';
 import { categoryBreakdown, subcategoryBreakdown } from '@/lib/analytics';
+import { isPaidThisMonth as isRecurringPaidThisMonth } from '@/lib/recurring';
 import { formatCompact, formatMoney, monthKey, monthTitle } from '@/lib/format';
 import { SECTION_COLOR, withAlpha } from '@/lib/theme';
 import { ProgressBar } from '@/components/ui/ProgressBar';
@@ -82,13 +83,7 @@ export function BudgetSection() {
   }
 
   function isPaidThisMonth(rp: RecurringPayment): boolean {
-    return txns.some(
-      (t) =>
-        t.type === (rp.kind as TransactionType) &&
-        t.accountId === rp.accountId &&
-        t.categoryId === rp.categoryId &&
-        t.amount === rp.amount,
-    );
+    return isRecurringPaidThisMonth(rp, txns);
   }
 
   async function markPaid(rp: RecurringPayment) {
