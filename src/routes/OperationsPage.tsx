@@ -11,7 +11,8 @@ import { EmptyState } from '@/components/ui/EmptyState';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { ProgressBar } from '@/components/ui/ProgressBar';
 import { BudgetSection } from '@/features/budget/BudgetSection';
-import { IconChevronRight } from '@/components/ui/Icon';
+import { AnalyticsSection } from '@/features/analytics/AnalyticsSection';
+import { IconChevronRight, IconSearch } from '@/components/ui/Icon';
 
 type Preset = 'day' | 'week' | 'month' | 'year' | 'all';
 
@@ -36,6 +37,7 @@ export function OperationsPage() {
   const [customFrom, setCustomFrom] = useState('');
   const [customTo, setCustomTo] = useState('');
   const [useCustom, setUseCustom] = useState(false);
+  const [query, setQuery] = useState('');
 
   const range = useMemo(() => {
     if (useCustom && customFrom && customTo) {
@@ -67,7 +69,8 @@ export function OperationsPage() {
     () => trendSeries(rows, range, granularity),
     [rows, range, granularity],
   );
-  const groups = useMemo(() => groupTransactionsByDay(rows), [rows]);
+
+  const accounts = useLiveQuery(() => db.accounts.toArray(), [], []);
 
   // Индикатор лимита бюджета — всегда по текущему календарному месяцу,
   // независимо от фильтра дат выше (лимиты в БД месячные).
@@ -97,6 +100,24 @@ export function OperationsPage() {
     0,
   );
 
+  // Поиск сужает только ленту операций — итоги и график динамики остаются
+  // по полному выбранному периоду, чтобы не искажать сводные цифры.
+  const filteredRows = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return rows;
+    return rows.filter((t) => {
+      const cat = monthCategories.find((c) => c.id === t.categoryId);
+      const acc = accounts.find((a) => a.id === t.accountId);
+      return (
+        t.note?.toLowerCase().includes(q) ||
+        cat?.name.toLowerCase().includes(q) ||
+        acc?.name.toLowerCase().includes(q) ||
+        String(t.amount).includes(q)
+      );
+    });
+  }, [rows, query, monthCategories, accounts]);
+  const groups = useMemo(() => groupTransactionsByDay(filteredRows), [filteredRows]);
+
   function scrollToBudget() {
     document.getElementById('budget-limits')?.scrollIntoView({ behavior: 'smooth' });
   }
@@ -104,6 +125,22 @@ export function OperationsPage() {
   return (
     <div className="space-y-5">
       <h1 className="pt-1 text-2xl font-bold">Операции</h1>
+
+      {/* Поиск по ленте операций */}
+      <div className="relative">
+        <IconSearch
+          width={18}
+          height={18}
+          className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted"
+        />
+        <input
+          type="text"
+          className="field pl-10"
+          placeholder="Поиск по заметке, категории, счёту…"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+        />
+      </div>
 
       {/* Индикатор лимита бюджета за текущий месяц */}
       {totalPlanned > 0 && (
@@ -217,6 +254,8 @@ export function OperationsPage() {
         </div>
       )}
 
+      <AnalyticsSection />
+
       {/* Лента операций по дням */}
       <div>
         <button
@@ -241,8 +280,12 @@ export function OperationsPage() {
         ) : groups.length === 0 ? (
           <EmptyState
             icon="📒"
-            title="Нет операций за период"
-            hint="Измените период или добавьте операцию через «+»"
+            title={query.trim() ? `Ничего не найдено по «${query.trim()}»` : 'Нет операций за период'}
+            hint={
+              query.trim()
+                ? 'Попробуйте изменить запрос поиска'
+                : 'Измените период или добавьте операцию через «+»'
+            }
             color={PALETTE[0]}
           />
         ) : feedOpen ? (

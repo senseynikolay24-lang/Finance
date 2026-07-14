@@ -12,6 +12,8 @@ const TABLES = [
   'holdings',
   'budgets',
   'settings',
+  'simpleDebts',
+  'recurringPayments',
 ] as const;
 
 /** Экспортирует всю БД в JSON-строку. */
@@ -20,7 +22,7 @@ export async function exportData(): Promise<string> {
   for (const t of TABLES) {
     dump[t] = await db.table(t).toArray();
   }
-  return JSON.stringify({ version: 1, exportedAt: Date.now(), data: dump }, null, 2);
+  return JSON.stringify({ version: 2, exportedAt: Date.now(), data: dump }, null, 2);
 }
 
 /** Импортирует данные из JSON, полностью заменяя текущие. */

@@ -8,7 +8,7 @@ import {
 } from 'date-fns';
 import { ru } from 'date-fns/locale';
 import type { Category, Transaction } from '@/db/types';
-import { periodRange, type Period, type Range } from './period';
+import { periodRange, shiftPeriod, type Period, type Range } from './period';
 
 export interface Totals {
   income: number;
@@ -215,6 +215,79 @@ export function trailingMonthsTrend(txns: Transaction[], monthsBack: number): Tr
       income: 0,
       expense: 0,
     };
+    for (const t of txns) {
+      if (t.date < range.start || t.date > range.end) continue;
+      if (t.type === 'income') point.income += t.amount;
+      else if (t.type === 'expense') point.expense += t.amount;
+    }
+    points.push(point);
+  }
+  return points;
+}
+
+function deltaPct(current: number, previous: number): number {
+  if (previous > 0) return ((current - previous) / previous) * 100;
+  return current > 0 ? 100 : 0;
+}
+
+export interface MonthComparison {
+  current: Totals;
+  previous: Totals;
+  incomeDeltaPct: number;
+  expenseDeltaPct: number;
+}
+
+/** Сравнение текущего календарного месяца с предыдущим. */
+export function monthComparison(txns: Transaction[], anchor = Date.now()): MonthComparison {
+  const currentRange = periodRange(anchor, 'month');
+  const previousRange = periodRange(shiftPeriod(anchor, 'month', -1), 'month');
+  const inRange = (t: Transaction, r: Range) => t.date >= r.start && t.date <= r.end;
+  const current = sumTotals(txns.filter((t) => inRange(t, currentRange)));
+  const previous = sumTotals(txns.filter((t) => inRange(t, previousRange)));
+  return {
+    current,
+    previous,
+    incomeDeltaPct: deltaPct(current.income, previous.income),
+    expenseDeltaPct: deltaPct(current.expense, previous.expense),
+  };
+}
+
+export interface NoteSlice {
+  note: string;
+  amount: number;
+  count: number;
+}
+
+/** Топ операций по заметке (замена «топ мест трат» при отсутствии поля merchant). */
+export function topNotes(
+  txns: Transaction[],
+  kind: 'income' | 'expense',
+  limit = 5,
+): NoteSlice[] {
+  const sums = new Map<string, NoteSlice>();
+  for (const t of txns) {
+    if (t.type !== kind) continue;
+    const note = t.note?.trim();
+    if (!note) continue;
+    const key = note.toLowerCase();
+    const existing = sums.get(key);
+    if (existing) {
+      existing.amount += t.amount;
+      existing.count += 1;
+    } else {
+      sums.set(key, { note, amount: t.amount, count: 1 });
+    }
+  }
+  return [...sums.values()].sort((a, b) => b.amount - a.amount).slice(0, limit);
+}
+
+/** Динамика доходов/расходов по календарным годам (включая текущий). */
+export function yearlyTrend(txns: Transaction[], yearsBack: number): TrendPoint[] {
+  const points: TrendPoint[] = [];
+  for (let i = yearsBack - 1; i >= 0; i--) {
+    const yearDate = new Date().getFullYear() - i;
+    const range = periodRange(new Date(yearDate, 0, 1).getTime(), 'year');
+    const point: TrendPoint = { label: String(yearDate), income: 0, expense: 0 };
     for (const t of txns) {
       if (t.date < range.start || t.date > range.end) continue;
       if (t.type === 'income') point.income += t.amount;
